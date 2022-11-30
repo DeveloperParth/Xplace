@@ -7,11 +7,15 @@ type Props = {
 };
 
 function Message({ message, isSent }: Props) {
-  console.log(isSent);
-  
   return (
     <>
-      <div className={`flex border py-2 px-3 rounded-md ${isSent ? "self-end" : "self-start"}`}>{message}</div>
+      <div
+        className={`flex border py-2 px-3 rounded-md ${
+          isSent ? "self-end" : "self-start"
+        }`}
+      >
+        {message}
+      </div>
     </>
   );
 }

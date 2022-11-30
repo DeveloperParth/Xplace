@@ -9,13 +9,14 @@ function Messages() {
   const server = useServer((state) => state.server);
   const user = useAuth((state) => state.user);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["messages"],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["messages", server?.id],
     queryFn: () => getMessages(server!.id),
   });
+
   if (isLoading) return <div>Loading...</div>;
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-4">
       {data?.messages.map((message: any) => {
         return (
           <Message

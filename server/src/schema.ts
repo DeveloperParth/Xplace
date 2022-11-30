@@ -4,6 +4,7 @@ export interface User {
   updatedAt: Date;
   email: string;
   name: string;
+  password: string;
   ownedServers?: Server[];
   joinedServers?: Server[];
   Message?: Message[];

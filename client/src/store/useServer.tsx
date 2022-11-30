@@ -1,6 +1,5 @@
 import create from "zustand";
-import { persist } from "zustand/middleware";
-import { loginUser } from "../api";
+import { useQueryClient } from "@tanstack/react-query";
 import { Server, User } from "../types";
 
 // zustand hook
@@ -12,6 +11,7 @@ type ServerState = {
 export const useServer = create<ServerState>((set, get) => ({
   // state
   server: null,
+  messages: [],
   // actions
   setServer: (server: Server | null) => set({ server }),
 }));

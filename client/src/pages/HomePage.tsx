@@ -3,6 +3,7 @@ import React from "react";
 import Messages from "../components/Messages/Messages";
 import { useServer } from "../store/useServer";
 import { getMessages } from "../api";
+import CreateMessage from "../components/Messages/CreateMessage";
 function HomePage() {
   const server = useServer((state) => state.server);
 
@@ -12,7 +13,12 @@ function HomePage() {
         {server?.name}
       </div>
 
-      {server?.id && <Messages />}
+      {server?.id && (
+        <>
+          <Messages />
+          <CreateMessage />
+        </>
+      )}
     </>
   );
 }

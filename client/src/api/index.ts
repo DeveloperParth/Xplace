@@ -17,7 +17,7 @@ export async function getMessages(serverId: string) {
   const { data } = await Api.get(`/api/messages/${serverId}`);
   return data;
 }
-export async function createMessage(serverId: string, content: string) {
-  const { data } = await Api.post(`/api/messages/${serverId}`, { content });
+export async function createMessage(serverId: string, text: string) {
+  const { data } = await Api.post(`/api/messages/${serverId}`, { text });
   return data;
 }

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { createServer, getServers } from "../api";
 import { useServer } from "../store/useServer";
+import { Server } from "../types";
 
 function Sidebar() {
   const [name, setName] = React.useState("");
@@ -20,6 +21,10 @@ function Sidebar() {
   const createServerHandler = async () => {
     mutation.mutate(name);
   };
+  const handleServerChange = async (server: Server) => {
+    setServer(server);
+    await queryClient.invalidateQueries(["messages"]);
+  };
   return (
     <div className="h-screen border-r px-3">
       <div className="border-b">
@@ -32,9 +37,7 @@ function Sidebar() {
           <div
             key={server.id}
             className="flex items-center justify-between border py-2 px-3"
-            onClick={() => {
-              setServer(server);
-            }}
+            onClick={() => handleServerChange(server)}
           >
             {server.name}-{server.owner?.name}
           </div>
