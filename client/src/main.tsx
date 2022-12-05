@@ -1,3 +1,4 @@
+import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import React from "react";
@@ -10,8 +11,16 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <App />
-        <ReactQueryDevtools />
+        <MantineProvider
+          withGlobalStyles
+          withCSSVariables
+          theme={{
+            colorScheme: "dark",
+          }}
+        >
+          <App />
+        </MantineProvider>
+        <ReactQueryDevtools position="bottom-right"/>
       </QueryClientProvider>
     </BrowserRouter>
   </React.StrictMode>

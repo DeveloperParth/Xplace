@@ -23,6 +23,8 @@ function Messages() {
             key={message.id}
             message={message.text}
             isSent={message.userId == user?.id}
+            user={message.user}
+            createdAt={message.createdAt}
           />
         );
       })}

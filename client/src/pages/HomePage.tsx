@@ -1,9 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import React from "react";
 import Messages from "../components/Messages/Messages";
 import { useServer } from "../store/useServer";
-import { getMessages } from "../api";
 import CreateMessage from "../components/Messages/CreateMessage";
+import Members from "../components/Members";
 function HomePage() {
   const server = useServer((state) => state.server);
 
@@ -14,10 +12,13 @@ function HomePage() {
       </div>
 
       {server?.id && (
-        <>
-          <Messages />
-          <CreateMessage />
-        </>
+        <div className="flex">
+          <main className="w-full">
+            <Messages />
+            <CreateMessage />
+          </main>
+          <Members />
+        </div>
       )}
     </>
   );

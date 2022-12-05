@@ -13,8 +13,13 @@ export async function createServer(name: string) {
   return data;
 }
 
+export async function getMembers(id: string) {
+  const { data } = await Api.get(`/api/servers/${id}/members`);
+  return data;
+}
+
 export async function getMessages(serverId: string) {
-  const { data } = await Api.get(`/api/messages/${serverId}`);
+  const { data } = await Api.get(`/api/servers/${serverId}/messages`);
   return data;
 }
 export async function createMessage(serverId: string, text: string) {
