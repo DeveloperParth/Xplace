@@ -7,16 +7,14 @@ function HomePage() {
 
   return (
     <>
-      <div className="w-full border-b dark:border-white/50 h-12">
-        {server?.name}
-      </div>
+
 
       {server?.id && (
         <div className="flex">
-          <main className="w-full">
+          <div className="w-full max-h-full">
             <Messages />
             <CreateMessage />
-          </main>
+          </div>
           <Members />
         </div>
       )}

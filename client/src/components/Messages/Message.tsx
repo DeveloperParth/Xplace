@@ -1,5 +1,4 @@
-import React from "react";
-import { Text, Box, Avatar, Group } from "@mantine/core";
+import { Text, Avatar, Group } from "@mantine/core";
 import { User } from "../../types";
 import moment from "moment";
 // prop types

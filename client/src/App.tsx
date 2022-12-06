@@ -12,13 +12,13 @@ import { useAuth } from "./store/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Box } from "@mantine/core";
 
-const socket = io("http://localhost:3000");
+const socket = io(import.meta.env.VITE_API_URL as string);
 function App() {
   const queryClient = useQueryClient();
   const user = useAuth((state) => state.user);
   useEffect(() => {
     user?.id && socket.emit("join", user?.id);
-    socket.on("message", (data) => {
+    socket.on("message", () => {
       queryClient.invalidateQueries(["messages"]);
     });
 
@@ -28,8 +28,8 @@ function App() {
   }, [socket]);
   return (
     <>
-      <div className="flex">
-        <Sidebar />
+      <div className="flex w-full">
+        {user && <Sidebar />}
         <Box
           sx={(theme) => ({
             width: "100%",

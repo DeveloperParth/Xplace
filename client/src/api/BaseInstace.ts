@@ -1,9 +1,8 @@
 import Axios from "axios";
-import ReactDOM from "react-dom";
 import { useAuth } from "../store/useAuth";
 
 const axios = Axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:9000",
   headers: {
     "Content-Type": "application/json",
   },

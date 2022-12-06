@@ -41,10 +41,14 @@ function Sidebar() {
   const { classes, cx } = useStyles();
   const queryClient = useQueryClient();
   const setServer = useServer((state) => state.setServer);
-  const user = useAuth((state) => state.user);
+  const server = useServer((state) => state.server);
   const { data, isLoading } = useQuery({
     queryKey: ["servers"],
     queryFn: getServers,
+    onSuccess(data) {
+      setServer(data.servers[0]);
+      setActiveLink(data.servers[0].id);
+    },
   });
   const createServerMutation = useMutation({
     mutationFn: createServer,
@@ -80,7 +84,7 @@ function Sidebar() {
 
   const links =
     data &&
-    data.servers.map((server: Server) => (
+    data.servers.map((server: Server, i: number) => (
       <a
         className={cx(classes.link, {
           [classes.linkActive]: activeLink === server.id,
@@ -108,7 +112,7 @@ function Sidebar() {
           </div>
           <div className={classes.main}>
             <Title order={4} className={classes.title}>
-              {user!.name}
+              {server?.name}
             </Title>
 
             <button
@@ -131,6 +135,7 @@ function Sidebar() {
         opened={isCreateServerOpen}
         onClose={() => setIsCreateServerOpen(false)}
         withCloseButton
+        zIndex={1000}
       >
         <TextInput
           label="Server Name"
@@ -243,11 +248,10 @@ const useStyles = createStyles((theme) => ({
     boxSizing: "border-box",
     fontFamily: `Greycliff CF, ${theme.fontFamily}`,
     marginBottom: theme.spacing.xl,
-    backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.white,
+
     padding: theme.spacing.md,
     paddingTop: 18,
-    height: 60,
+    // height: 60,
     borderBottom: `1px solid ${
       theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[3]
     }`,
