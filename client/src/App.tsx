@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { useAuth } from "./store/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Box } from "@mantine/core";
+import InvitationPage from "./pages/InvitationPage";
 
 const socket = io(import.meta.env.VITE_API_URL as string);
 function App() {
@@ -48,6 +49,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/i/:code" element={<InvitationPage />} />
             <Route
               path="/login"
               element={

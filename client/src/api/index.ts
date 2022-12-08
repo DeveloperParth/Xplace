@@ -12,6 +12,10 @@ export async function createServer(name: string) {
   const { data } = await Api.post("/api/servers", { name });
   return data;
 }
+export async function joinServer(code: string) {
+  const { data } = await Api.post(`/api/servers/join/${code}`);
+  return data;
+}
 
 export async function getMembers(id: string) {
   const { data } = await Api.get(`/api/servers/${id}/members`);

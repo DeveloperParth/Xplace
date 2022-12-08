@@ -30,9 +30,6 @@ axios.interceptors.response.use(
     return response;
   },
   (error) => {
-    alert(error.response.data.message);
-    console.log(error.response);
-
     return Promise.reject(error);
   }
 );

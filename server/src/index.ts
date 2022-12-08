@@ -1,11 +1,11 @@
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
-import routes from "./routes";
 import { config } from "dotenv";
-import ApiError from "./utils/ApiError";
-import db from "./db";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import morgan from "morgan";
+import routes from "./routes";
+import ApiError from "./utils/ApiError";
 
 const app = express();
 const httpServer = createServer(app);
@@ -18,8 +18,11 @@ config();
 app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-routes(app);
 
+app.use(morgan("dev"));
+
+
+routes(app);
 app.use((err: ApiError, _: Request, res: Response, next: NextFunction) => {
   console.error(err);
   return res.status(err.status || 500).json({
@@ -28,22 +31,11 @@ app.use((err: ApiError, _: Request, res: Response, next: NextFunction) => {
   });
 });
 
-async function seedDb() {
-  console.log("Seeding database...");
-  await db.user.create({
-    data: {
-      email: "parth",
-      password: "password",
-      name: "Parth",
-    },
-  });
-  console.log("Database seeded!");
-}
+
 global.sockets = {};
 io.on("connection", (socket) => {
   socket.on("join", (data) => {
     global.sockets[data] = socket.id;
-    console.log(global.sockets);
   });
   socket.on("disconnect", () => {
     // find the socket id and delete it

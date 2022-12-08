@@ -20,17 +20,41 @@ model User {
   ownedServers  Server[]  @relation("OwnedServers")
   joinedServers Server[]  @relation("JoinedServers")
   Message       Message[]
+  Roles         Role[]
 }
 
-model Server {
+model Role {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  color     String
+  Server    Server   @relation(fields: [serverId], references: [id])
+  serverId  String
+  Users     User[]
+}
+
+model Invitation {
   id        String    @id @default(uuid())
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
+  code      String    @unique
+  Server    Server    @relation(fields: [serverId], references: [id])
+  serverId  String
+}
+
+model Server {
+  id        String       @id @default(uuid())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
   name      String
-  owner     User      @relation("OwnedServers", fields: [ownerId], references: [id])
+  Owner     User         @relation("OwnedServers", fields: [ownerId], references: [id])
   ownerId   String
-  members   User[]    @relation("JoinedServers")
-  Message   Message[]
+  Members   User[]       @relation("JoinedServers")
+  Messages  Message[]
+  Roles     Role[]
+  Invite    Invitation[]
 }
 
 model Message {
