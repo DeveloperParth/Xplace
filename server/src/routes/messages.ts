@@ -4,27 +4,32 @@ import db from "../db";
 import { io } from "../index";
 
 const router = Router();
-router.get(
-  "/:id/messages",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const messages = await db.message.findMany({
-        where: {
-          serverId: req.params.id,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        include: {
-          user: true,
-        },
-      });
-      res.json({ messages });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
+// router.get(
+//   "/:id/messages",
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       const messages = await db.message.findMany({
+//         where: {
+//           serverId: req.params.id,
+//         },
+//         orderBy: {
+//           createdAt: "asc",
+//         },
+//         include: {
+//           ReplyTo: {
+//             include: {
+//               user: true,
+//             },
+//           },
+//           user: true,
+//         },
+//       });
+//       res.json({ messages });
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
 router.get(
   "/:id/members",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -52,6 +57,11 @@ router.post(
       const message = await db.message.create({
         data: {
           text: req.body.text,
+          ReplyTo: req.body.replyTo && {
+            connect: {
+              id: req.body.replyTo,
+            },
+          },
           Server: {
             connect: {
               id: req.params.id,
@@ -64,16 +74,10 @@ router.post(
           },
         },
         include: {
-          Server: {
-            select: {
-              Members: true,
-            },
-          },
+          Server: true,
         },
       });
-      message.Server.Members.map((member: any) => {
-        io.to(global.sockets[member.id]).emit("message", message);
-      });
+      io.to(req.params.id).emit("message", message);
       res.json({ message });
     } catch (error) {
       next(error);

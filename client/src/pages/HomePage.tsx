@@ -2,21 +2,28 @@ import Messages from "../components/Messages/Messages";
 import { useServer } from "../store/useServer";
 import CreateMessage from "../components/Messages/CreateMessage";
 import Members from "../components/Members";
+import { Box, Group } from "@mantine/core";
 function HomePage() {
-  const server = useServer((state) => state.server);
+  const { server, userRoles } = useServer((state) => state);
 
   return (
     <>
-
-
       {server?.id && (
-        <div className="flex">
-          <div className="w-full max-h-full">
+        <>
+          {/* <Group noWrap pos="relative"> */}
+          <Box
+            sx={(theme) => ({
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+            })}
+          >
             <Messages />
             <CreateMessage />
-          </div>
+          </Box>
           <Members />
-        </div>
+          {/* </Group> */}
+        </>
       )}
     </>
   );

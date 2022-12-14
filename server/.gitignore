@@ -1,5 +1,7 @@
 /node_modules
 
 /build
-
+# ignore the uploads folder content but not the folder itself
+/public/uploads/*
+!/public/uploads/.gitkeep
 .env

@@ -1,14 +1,15 @@
+import { Button, Title } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { MutateFunction, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { joinServer } from "../api";
+import { getInvitation, joinServer } from "../api";
+import { Invitation } from "../types";
 
 function InvitationPage() {
   const { code } = useParams();
   const navigate = useNavigate();
-  const { error, mutate } = useMutation<
+  const { mutate, isLoading: joiningServerLoading } = useMutation<
     any,
     AxiosError<{ message: string }>,
     string
@@ -22,11 +23,24 @@ function InvitationPage() {
       navigate("/", { replace: true });
     },
   });
-  useEffect(() => {
-    mutate(code!);
-  }, []);
 
-  return <div>{error?.response?.data.message}</div>;
+  const { data } = useQuery<{ invitation: Invitation }>({
+    queryKey: ["server", code],
+    queryFn: () => getInvitation(code!),
+  });
+  if (!data?.invitation) return <div>Loading...</div>;
+  return (
+    <>
+      <div>
+        <Title>{data?.invitation.Server.name}</Title>
+        <p>Invited by {data?.invitation.User.name}</p>
+
+        <Button onClick={() => mutate(code!)} loading={joiningServerLoading}>
+          Join {data?.invitation.Server.name}
+        </Button>
+      </div>
+    </>
+  );
 }
 
 export default InvitationPage;

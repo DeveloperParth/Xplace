@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useState } from "react";
-import { createServer, getServers } from "../api";
-import { useAuth } from "../store/useAuth";
+import { useState } from "react";
+import { createInvitation, createServer, getServers } from "../api";
 import { useServer } from "../store/useServer";
 import { Server } from "../types";
 import {
@@ -13,41 +12,39 @@ import {
   Modal,
   TextInput,
   Button,
+  Avatar,
+  Group,
+  Select,
+  Menu,
 } from "@mantine/core";
-import {
-  IconHome2,
-  IconGauge,
-  IconDeviceDesktopAnalytics,
-  IconFingerprint,
-  IconCalendarStats,
-  IconUser,
-  IconSettings,
-} from "@tabler/icons";
+import { IconHome2 } from "@tabler/icons";
 import { IconPlus } from "@tabler/icons";
-
-const mainLinksMockdata = [
-  { icon: IconHome2, label: "Home" },
-  { icon: IconGauge, label: "Dashboard" },
-  { icon: IconDeviceDesktopAnalytics, label: "Analytics" },
-  { icon: IconCalendarStats, label: "Releases" },
-  { icon: IconUser, label: "Account" },
-  { icon: IconFingerprint, label: "Security" },
-  { icon: IconSettings, label: "Settings" },
-];
+import { IconChevronDown } from "@tabler/icons";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../store/useAuth";
+import { IconUserPlus } from "@tabler/icons";
+import { IconSettings } from "@tabler/icons";
+import { showNotification } from "@mantine/notifications";
 
 function Sidebar() {
+  const navigate = useNavigate();
   const [isCreateServerOpen, setIsCreateServerOpen] = useState(false);
   const [serverName, setServerName] = useState("");
   const { classes, cx } = useStyles();
   const queryClient = useQueryClient();
-  const setServer = useServer((state) => state.setServer);
   const server = useServer((state) => state.server);
+  const setServer = useServer((state) => state.setServer);
+  const { status, setStatus } = useAuth((state) => state);
   const { data, isLoading } = useQuery({
     queryKey: ["servers"],
     queryFn: getServers,
     onSuccess(data) {
-      setServer(data.servers[0]);
-      setActiveLink(data.servers[0].id);
+      if (data.servers.length === 0) return;
+      if (!server?.id) {
+        setServer(data.servers[0]);
+
+        setActiveLink(data.servers[0].id);
+      }
     },
   });
   const createServerMutation = useMutation({
@@ -57,34 +54,45 @@ function Sidebar() {
     },
   });
   const handleServerChange = async (server: Server) => {
-    setServer(server);
     await queryClient.invalidateQueries(["messages"]);
+    navigate("/");
+    setServer(server);
   };
   const [active, setActive] = useState("Releases");
   const [activeLink, setActiveLink] = useState("Settings");
 
-  const mainLinks = mainLinksMockdata.map((link) => (
-    <Tooltip
-      label={link.label}
-      position="right"
-      withArrow
-      transitionDuration={0}
-      key={link.label}
-    >
-      <UnstyledButton
-        onClick={() => setActive(link.label)}
-        className={cx(classes.mainLink, {
-          [classes.mainLinkActive]: link.label === active,
-        })}
+  const mainLinks =
+    data &&
+    data.servers.map((server: Server) => (
+      <Tooltip
+        label={server.name}
+        position="right"
+        offset={10}
+        withArrow
+        bg="dark"
+        transitionDuration={0}
+        key={server.id}
       >
-        <link.icon stroke={1.5} />
-      </UnstyledButton>
-    </Tooltip>
-  ));
+        <UnstyledButton
+          onClick={() => {
+            setActiveLink(server.id);
+            handleServerChange(server);
+          }}
+          className={cx(classes.mainLink, {
+            [classes.mainLinkActive]: active === server.id,
+          })}
+        >
+          <Avatar
+            size="lg"
+            src={import.meta.env.VITE_UPLOADS_URL + server.photo}
+          />
+        </UnstyledButton>
+      </Tooltip>
+    ));
 
   const links =
     data &&
-    data.servers.map((server: Server, i: number) => (
+    [].map((server: Server, i: number) => (
       <a
         className={cx(classes.link, {
           [classes.linkActive]: activeLink === server.id,
@@ -100,6 +108,22 @@ function Sidebar() {
         {server.name}
       </a>
     ));
+  async function invitePeopleHandler(
+    _: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ): Promise<void> {
+    try {
+      const invitation = await createInvitation(server?.id!);
+      showNotification({
+        title: "Invitation link copied to clipboard",
+        message: "Share it with your friends",
+        color: "teal",
+      });
+      navigator.clipboard.writeText(invitation.link);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   return (
     <>
       <Navbar height={750} width={{ sm: 300 }}>
@@ -109,24 +133,66 @@ function Sidebar() {
               <IconHome2 type="mark" size={30} />
             </div>
             {mainLinks}
+            <Tooltip
+              label={"Create Server"}
+              position="right"
+              offset={10}
+              withArrow
+              bg="dark"
+              transitionDuration={0}
+            >
+              <UnstyledButton
+                onClick={() => setIsCreateServerOpen(true)}
+                className={classes.createServerButton}
+              >
+                <IconPlus />
+              </UnstyledButton>
+            </Tooltip>
           </div>
           <div className={classes.main}>
-            <Title order={4} className={classes.title}>
-              {server?.name}
-            </Title>
-
-            <button
-              className={classes.createServerButton}
-              onClick={(event) => {
-                event.preventDefault();
-                setIsCreateServerOpen(true);
-              }}
-            >
-              <IconPlus />
-              <span>Create Server</span>
-            </button>
-
+            <Menu>
+              <Menu.Target>
+                <Group
+                  position="center"
+                  align="center"
+                  noWrap
+                  p="sm"
+                  className={classes.titleContainer}
+                >
+                  <Title order={4} className={classes.title}>
+                    {server?.name}
+                  </Title>
+                  <IconChevronDown />
+                </Group>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Application</Menu.Label>
+                <Menu.Item
+                  icon={<IconUserPlus size={18} />}
+                  onClick={invitePeopleHandler}
+                >
+                  Invite people
+                </Menu.Item>
+                <Menu.Item
+                  icon={<IconSettings size={18} />}
+                  onClick={() => navigate(`/server/${server?.id}/settings`)}
+                >
+                  Server settings
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
             {links}
+            {/* dropdown  */}
+            <Select
+              label="Select status"
+              data={[
+                { label: "Normal", value: "" },
+                { label: "Idle", value: "Idle" },
+                { label: "Do not disturb", value: "DND" },
+              ]}
+              defaultValue={status || ""}
+              onChange={(value) => setStatus(value as "Idle" | "DND")}
+            />
           </div>
         </Navbar.Section>
       </Navbar>
@@ -137,21 +203,23 @@ function Sidebar() {
         withCloseButton
         zIndex={1000}
       >
-        <TextInput
-          label="Server Name"
-          value={serverName}
-          required
-          onChange={(e) => setServerName(e.target.value)}
-        />
-        <Button
-          mt="md"
-          mx="auto"
-          variant="outline"
-          color="green"
-          onClick={() => createServerMutation.mutate(serverName)}
-        >
-          Create
-        </Button>
+        <form>
+          <TextInput
+            label="Server Name"
+            value={serverName}
+            required
+            onChange={(e) => setServerName(e.target.value)}
+          />
+          <Button
+            mt="md"
+            mx="auto"
+            variant="outline"
+            color="green"
+            onClick={() => createServerMutation.mutate(serverName)}
+          >
+            Create
+          </Button>
+        </form>
       </Modal>
     </>
   );
@@ -170,21 +238,14 @@ const useStyles = createStyles((theme) => ({
     marginInline: "auto",
     marginBlock: theme.spacing.xs,
     fontWeight: 600,
-    height: 44,
-    width: 44,
+    height: 50,
+    width: 50,
     backgroundColor: theme.colors.green[5],
     color: theme.white,
-    transition: "300ms ease-in",
+    transition: "150ms ease-in",
 
     "&:hover": {
-      width: "100%",
-      borderTopRightRadius: 0,
-      borderBottomRightRadius: 0,
-      borderTopLeftRadius: 0,
-      borderBottomLeftRadius: 0,
-      span: {
-        opacity: 1,
-      },
+      borderRadius: theme.radius.lg,
     },
     span: {
       display: "none",
@@ -194,9 +255,11 @@ const useStyles = createStyles((theme) => ({
     },
   },
   aside: {
-    flex: "0 0 60px",
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: "min(100%, 70px)",
     backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.white,
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[2],
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -210,51 +273,50 @@ const useStyles = createStyles((theme) => ({
     backgroundColor:
       theme.colorScheme === "dark"
         ? theme.colors.dark[6]
-        : theme.colors.gray[0],
+        : theme.colors.gray[1],
+
+    [`@media (max-width: ${theme.breakpoints.xs}px)`]: {
+      display: "none",
+    },
   },
 
   mainLink: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.xl,
+    marginBottom: theme.spacing.sm,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+    transition: "200ms ease-in",
     color:
       theme.colorScheme === "dark"
         ? theme.colors.dark[0]
         : theme.colors.gray[7],
 
     "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[5]
-          : theme.colors.gray[0],
+      borderRadius: theme.radius.lg,
     },
   },
 
   mainLinkActive: {
     "&, &:hover": {
-      backgroundColor: theme.fn.variant({
-        variant: "light",
-        color: theme.primaryColor,
-      }).background,
-      color: theme.fn.variant({ variant: "light", color: theme.primaryColor })
-        .color,
+      borderRadius: theme.radius.lg,
     },
   },
-
+  titleContainer: {
+    boxShadow: theme.shadows.md,
+    cursor: "pointer",
+    "&:hover": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[4]
+          : theme.colors.gray[0],
+    },
+  },
   title: {
-    boxSizing: "border-box",
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-    marginBottom: theme.spacing.xl,
-
-    padding: theme.spacing.md,
-    paddingTop: 18,
     // height: 60,
-    borderBottom: `1px solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[3]
-    }`,
+    width: "100%",
+    textAlign: "left",
   },
 
   logo: {

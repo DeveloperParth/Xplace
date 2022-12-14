@@ -26,9 +26,43 @@ router.get(
         },
         include: {
           Owner: true,
+          Members: {
+            where: {
+              id: res.locals.user.id,
+            },
+            include: {
+              Roles: true,
+            },
+          },
         },
       });
       res.json({ servers });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+router.get(
+  "/:id",
+  checkUser,
+  async (req: Request, res: Response, next: NextFunction) => {
+    // finds a server by id
+    try {
+      const server = await db.server.findUnique({
+        where: {
+          id: req.params.id,
+        },
+        include: {
+          Owner: true,
+          Members: {
+            include: {
+              Roles: true,
+            },
+          },
+        },
+      });
+      if (!server) throw new ApiError("Server not found", 404);
+      res.json({ server });
     } catch (error) {
       next(error);
     }
@@ -100,8 +134,31 @@ router.post(
   }
 );
 
+router.get(
+  "/join/:code",
+  async (req: any, res: Response, next: NextFunction) => {
+    // creates a new server
+    try {
+      // get the date of 7 days from now
+      const invitation = await db.invitation.findUnique({
+        where: {
+          code: req.params.code,
+        },
+        include: {
+          Server: true,
+          User: true,
+        },
+      });
+      res.json({ invitation });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 router.post(
   "/:id/invite",
+  checkUser,
   async (req: any, res: Response, next: NextFunction) => {
     // creates a new server
     try {
@@ -132,10 +189,55 @@ router.post(
           },
           code: await getRandomCode(),
           expiresAt,
+          User: {
+            connect: {
+              id: res.locals.user.id,
+            },
+          },
         },
       });
       const link = `${process.env.FRONTEND_URL}/i/${invitation.code}`;
       res.json({ link, message: "Invitation created" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
+  "/:id/role",
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const role = await db.role.create({
+        data: {
+          name: req.body.name,
+          color: req.body.color,
+          Server: {
+            connect: {
+              id: req.params.id,
+            },
+          },
+        },
+      });
+      res.json({ role, message: "Role created" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.get(
+  "/:id/roles",
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const roles = await db.role.findMany({
+        where: {
+          Server: {
+            id: req.params.id,
+          },
+        },
+      });
+      res.json({ roles });
     } catch (error) {
       next(error);
     }
@@ -155,6 +257,7 @@ router.get(
         },
         include: {
           user: true,
+          ReplyTo: true,
         },
       });
       res.json({ messages });
@@ -172,7 +275,11 @@ router.get(
           id: req.params.id,
         },
         include: {
-          Members: true,
+          Members: {
+            include: {
+              Roles: true,
+            },
+          },
           Owner: true,
         },
       });
