@@ -3,6 +3,18 @@ export async function loginUser(email: string, password: string) {
   const { data } = await Api.post("/api/auth/login", { email, password });
   return data;
 }
+export async function registerUser(
+  email: string,
+  name: string,
+  password: string
+) {
+  const { data } = await Api.post("/api/auth/register", {
+    email,
+    password,
+    name,
+  });
+  return data;
+}
 
 export async function getServers() {
   const { data } = await Api.get("/api/servers");
@@ -49,5 +61,10 @@ export async function createMessage(
     text,
     replyTo,
   });
+  return data;
+}
+
+export async function updateMessage(id: string, text: string) {
+  const { data } = await Api.put(`/api/messages/${id}`, { text });
   return data;
 }

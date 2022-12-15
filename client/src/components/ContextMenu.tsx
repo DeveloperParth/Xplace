@@ -6,13 +6,16 @@ import { IconEdit } from "@tabler/icons";
 import { IconTrash } from "@tabler/icons";
 import { IconArrowBackUp } from "@tabler/icons";
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../store/useAuth";
 import { useMessage } from "../store/useMessage";
 import { useServer } from "../store/useServer";
 
 const ContextMenuDemo = () => {
   const { classes } = useStyles();
   const setReplyingTo = useMessage((state) => state.setReplyingTo);
+  const setEditing = useMessage((state) => state.setEditing);
   const messages = useServer((state) => state.messages);
+  const user = useAuth((state) => state.user);
   const [contextMenu, setContextMenu] = useState({
     x: 0,
     y: 0,
@@ -49,6 +52,9 @@ const ContextMenuDemo = () => {
     });
   };
   if (contextMenu.show) {
+    const message = messages.find(
+      (message) => message.id === contextMenu.content.split("message-")[1]
+    );
     return (
       <div
         className={classes.contextMenu}
@@ -62,20 +68,26 @@ const ContextMenuDemo = () => {
             <Menu.Item
               rightSection={<IconArrowBackUp />}
               onClick={() => {
-                const message = messages.find(
-                  (message) =>
-                    message.id === contextMenu.content.split("message-")[1]
-                );
                 message && setReplyingTo(message);
-                console.log(messages);
               }}
             >
               Reply
             </Menu.Item>
-            <Menu.Item rightSection={<IconEdit />}>Edit</Menu.Item>
-            <Menu.Item color="red" rightSection={<IconTrash />}>
-              Delete
-            </Menu.Item>
+            {message?.user.id === user?.id && (
+              <>
+                <Menu.Item
+                  rightSection={<IconEdit />}
+                  onClick={() => {
+                    message && setEditing(message);
+                  }}
+                >
+                  Edit
+                </Menu.Item>
+                <Menu.Item color="red" rightSection={<IconTrash />}>
+                  Delete
+                </Menu.Item>
+              </>
+            )}
           </Menu.Dropdown>
         </Menu>
       </div>

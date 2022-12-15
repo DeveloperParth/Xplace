@@ -44,7 +44,9 @@ router.post(
           name: req.body.name,
         },
       });
-      return res.json(user);
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET!);
+
+      return res.json({ user, token });
     } catch (error) {
       next(error);
     }

@@ -85,4 +85,28 @@ router.post(
   }
 );
 
+router.put(
+  "/:id",
+  checkUser,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const message = await db.message.update({
+        where: {
+          id: req.params.id,
+        },
+        data: {
+          text: req.body.text,
+          isEdited: true,
+        },
+        include: {
+          Server: true,
+        },
+      });
+      res.json({ message });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;

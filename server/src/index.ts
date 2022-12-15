@@ -45,14 +45,20 @@ io.on(
     socket.on("join", async ({ status }) => {
       global.sockets[socket.userId] = socket.id;
       socket.preferedStatus = status;
-      await prisma.user.update({
-        where: {
-          id: socket.userId,
-        },
-        data: {
-          status: status || "Online",
-        },
-      });
+      await prisma.user
+        .update({
+          where: {
+            id: socket.userId,
+          },
+          data: {
+            status: status || "Online",
+          },
+        })
+        .catch((err) => {
+          if (err.code === "P2025") {
+            socket.disconnect(true);
+          }
+        });
       await prisma.user
         .findUnique({
           where: {

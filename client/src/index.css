@@ -9,3 +9,10 @@ body{
 .w-full{
     width: 100%;
 }
+
+.highlight{
+    background-color: rgba(128, 128, 128, 0.2);
+}
+.p-none{
+    pointer-events: none;
+}

@@ -179,7 +179,7 @@ router.post(
         where: { id: req.params.id },
       });
       if (!isServerExists) throw new ApiError("Server not found", 404);
-      const expiresAt = new Date(req.body.expiresAt);
+      const expiresAt = new Date(req.body.expiresAt || Date.now() + 604800000);
       const invitation = await db.invitation.create({
         data: {
           Server: {

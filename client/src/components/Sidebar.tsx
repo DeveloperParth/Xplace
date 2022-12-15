@@ -53,6 +53,11 @@ function Sidebar() {
       queryClient.invalidateQueries(["servers"]);
     },
   });
+  const formSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    createServerMutation.mutate(serverName);
+    setIsCreateServerOpen(false);
+  };
   const handleServerChange = async (server: Server) => {
     await queryClient.invalidateQueries(["messages"]);
     navigate("/");
@@ -203,7 +208,7 @@ function Sidebar() {
         withCloseButton
         zIndex={1000}
       >
-        <form>
+        <form onSubmit={formSubmitHandler}>
           <TextInput
             label="Server Name"
             value={serverName}
@@ -215,7 +220,7 @@ function Sidebar() {
             mx="auto"
             variant="outline"
             color="green"
-            onClick={() => createServerMutation.mutate(serverName)}
+            type="submit"
           >
             Create
           </Button>
@@ -259,7 +264,9 @@ const useStyles = createStyles((theme) => ({
     flexShrink: 0,
     flexBasis: "min(100%, 70px)",
     backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[2],
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[7]
+        : theme.colors.gray[2],
     display: "flex",
     flexDirection: "column",
     alignItems: "center",

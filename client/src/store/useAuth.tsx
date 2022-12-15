@@ -1,6 +1,6 @@
 import create from "zustand";
 import { persist } from "zustand/middleware";
-import { loginUser } from "../api";
+import { loginUser, registerUser } from "../api";
 import { socket } from "../App";
 import { queryClient } from "../main";
 import { User } from "../types";
@@ -11,6 +11,7 @@ type AuthState = {
   token: string | null;
   status: "Idle" | "DND" | null;
   login: (email: string, password: string) => void;
+  register: (email: string, password: string, name: string) => void;
   logout: () => void;
   setStatus: (status: "Idle" | "DND" | null) => void;
 };
@@ -25,8 +26,11 @@ export const useAuth = create(
       // actions
       login: async (email: string, password: string) => {
         const { user, token } = await loginUser(email, password);
-        console.log("user", user);
 
+        set({ user, token });
+      },
+      register: async (email: string, password: string, name: string) => {
+        const { user, token } = await registerUser(email, password, name);
         set({ user, token });
       },
       logout: () => {

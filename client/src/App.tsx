@@ -25,7 +25,9 @@ export const socket = io(import.meta.env.VITE_API_URL as string, {
 function App() {
   const queryClient = useQueryClient();
   const { user, status } = useAuth((state) => state);
-  const { setMembers, setMessages, server } = useServer((state) => state);
+  const setMembers = useServer((state) => state.setMembers);
+  const setMessages = useServer((state) => state.setMessages);
+  const server = useServer((state) => state.server);
   useEffect(() => {
     user?.id && socket.emit("join", { status });
     socket.on("message", (message: Message) => {
@@ -53,6 +55,8 @@ function App() {
       socket.off("status");
     };
   }, [socket]);
+
+
   return (
     <>
       <Box
@@ -69,9 +73,7 @@ function App() {
             overflowY: "auto",
             display: "flex",
             backgroundColor:
-              theme.colorScheme === "dark"
-                ? theme.colors.dark[6]
-                : theme.white,
+              theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white,
           })}
         >
           <Routes>

@@ -6,6 +6,7 @@ import {
   Title,
   Text,
   Indicator,
+  Skeleton,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { getMembers } from "../api";
@@ -71,9 +72,33 @@ function Members() {
       >
         Members
       </Title>
+      {isLoading && <PlaceHolder />}
       <Stack>{members}</Stack>
     </Navbar>
   );
 }
-
+const PlaceHolder = () => {
+  const Single = () => (
+    <Group noWrap align="center" mb="md">
+      <Skeleton height={50} circle />
+      <Stack w="60%" spacing="xs" justify="center">
+        <Skeleton width="100%" height={5} />
+        <Skeleton width="100%" height={5} />
+      </Stack>
+    </Group>
+  );
+  return (
+    <>
+      <Single />
+      <Single />
+      <Single />
+      <Single />
+      <Single />
+      <Single />
+      <Single />
+      <Single />
+      <Single />
+    </>
+  );
+};
 export default Members;
