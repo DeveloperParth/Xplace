@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { createInvitation, createServer, getServers } from "../api";
 import { useServer } from "../store/useServer";
-import { Server } from "../types";
+import { Category, Channel, PermissionTypes, Server } from "../types";
 import {
   createStyles,
   Navbar,
@@ -16,55 +16,71 @@ import {
   Group,
   Select,
   Menu,
+  ScrollArea,
+  Box,
 } from "@mantine/core";
 import { IconHome2 } from "@tabler/icons";
 import { IconPlus } from "@tabler/icons";
 import { IconChevronDown } from "@tabler/icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../store/useAuth";
 import { IconUserPlus } from "@tabler/icons";
 import { IconSettings } from "@tabler/icons";
 import { showNotification } from "@mantine/notifications";
+import CreateChannelButton from "./Modals/CreateChannelButton";
+import { IconHash } from "@tabler/icons";
 
 function Sidebar() {
   const navigate = useNavigate();
+  const { serverId, channelId } = useParams<{
+    serverId: string;
+    channelId: string;
+  }>();
   const [isCreateServerOpen, setIsCreateServerOpen] = useState(false);
   const [serverName, setServerName] = useState("");
   const { classes, cx } = useStyles();
   const queryClient = useQueryClient();
   const server = useServer((state) => state.server);
+  const currentChannel = useServer((state) => state.currentChannel);
   const setServer = useServer((state) => state.setServer);
+  const setCurrentChannel = useServer((state) => state.setCurrentChannel);
+  const hasPermission = useServer((state) => state.hasPermission);
   const { status, setStatus } = useAuth((state) => state);
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ["servers"],
     queryFn: getServers,
-    onSuccess(data) {
-      if (data.servers.length === 0) return;
-      if (!server?.id) {
-        setServer(data.servers[0]);
-
-        setActiveLink(data.servers[0].id);
-      }
-    },
   });
+
   const createServerMutation = useMutation({
     mutationFn: createServer,
     onSuccess: () => {
       queryClient.invalidateQueries(["servers"]);
     },
   });
+
   const formSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     createServerMutation.mutate(serverName);
     setIsCreateServerOpen(false);
   };
   const handleServerChange = async (server: Server) => {
-    await queryClient.invalidateQueries(["messages"]);
-    navigate("/");
     setServer(server);
+    console.log(server);
+
+    queryClient.invalidateQueries(["messages"]);
+    const channel =
+      server.Channels?.[0] || server.Categories?.[0]?.Channels?.[0];
+    if (channel) setCurrentChannel(channel);
+    navigate(`/channels/${server.id}/${channel?.id}`);
   };
-  const [active, setActive] = useState("Releases");
-  const [activeLink, setActiveLink] = useState("Settings");
+  const handleChannelChange = async (channel: Channel) => {
+    await queryClient.invalidateQueries(["messages"]);
+    setCurrentChannel(channel);
+    navigate(`/channels/${server?.id}/${channel.id}`);
+  };
+
+  const [active, setActive] = useState(server?.id || serverId);
+  const [activeLink, setActiveLink] = useState(currentChannel?.id || channelId);
 
   const mainLinks =
     data &&
@@ -80,7 +96,7 @@ function Sidebar() {
       >
         <UnstyledButton
           onClick={() => {
-            setActiveLink(server.id);
+            setActive(server.id);
             handleServerChange(server);
           }}
           className={cx(classes.mainLink, {
@@ -97,21 +113,35 @@ function Sidebar() {
 
   const links =
     data &&
-    [].map((server: Server, i: number) => (
-      <a
-        className={cx(classes.link, {
-          [classes.linkActive]: activeLink === server.id,
-        })}
-        href="/"
-        onClick={(event) => {
-          event.preventDefault();
-          setActiveLink(server.id);
-          handleServerChange(server);
-        }}
-        key={server.id}
-      >
-        {server.name}
-      </a>
+    server?.Categories?.map((category: Category, i: number) => (
+      <div key={category.id}>
+        <div className={classes.link}>
+          {category.name}
+          {hasPermission(PermissionTypes.manageChannels) && (
+            <CreateChannelButton
+              serverId={server.id}
+              categoryId={category.id}
+            />
+          )}
+        </div>
+        <div className={classes.subLinkContainer}>
+          {category.Channels?.map((channel) => (
+            <UnstyledButton
+              className={cx(classes.subLink, {
+                [classes.subLinkActive]: activeLink === channel.id,
+              })}
+              key={channel.id}
+              onClick={() => {
+                setActiveLink(channel.id);
+                handleChannelChange(channel);
+              }}
+            >
+              <IconHash />
+              {channel.name}
+            </UnstyledButton>
+          ))}
+        </div>
+      </div>
     ));
   async function invitePeopleHandler(
     _: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -131,10 +161,17 @@ function Sidebar() {
 
   return (
     <>
-      <Navbar height={750} width={{ sm: 300 }}>
+      <Navbar height={750} width={{ sm: 70, xs: 70 }} sx={{ border: "none" }}>
         <Navbar.Section grow className={classes.wrapper}>
           <div className={classes.aside}>
-            <div className={classes.logo}>
+            <div
+              className={classes.logo}
+              onClick={() => {
+                setServer(null);
+                setCurrentChannel(null);
+                navigate("/channels/@me");
+              }}
+            >
               <IconHome2 type="mark" size={30} />
             </div>
             {mainLinks}
@@ -154,7 +191,11 @@ function Sidebar() {
               </UnstyledButton>
             </Tooltip>
           </div>
-          <div className={classes.main}>
+        </Navbar.Section>
+      </Navbar>
+      <Navbar height={750} width={{ sm: 240 }} className={classes.subNavbar}>
+        <Navbar.Section>
+          {server && (
             <Menu>
               <Menu.Target>
                 <Group
@@ -172,12 +213,14 @@ function Sidebar() {
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Label>Application</Menu.Label>
-                <Menu.Item
-                  icon={<IconUserPlus size={18} />}
-                  onClick={invitePeopleHandler}
-                >
-                  Invite people
-                </Menu.Item>
+                {hasPermission(PermissionTypes.invitePeople) && (
+                  <Menu.Item
+                    icon={<IconUserPlus size={18} />}
+                    onClick={invitePeopleHandler}
+                  >
+                    Invite people
+                  </Menu.Item>
+                )}
                 <Menu.Item
                   icon={<IconSettings size={18} />}
                   onClick={() => navigate(`/server/${server?.id}/settings`)}
@@ -186,19 +229,20 @@ function Sidebar() {
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
-            {links}
-            {/* dropdown  */}
-            <Select
-              label="Select status"
-              data={[
-                { label: "Normal", value: "" },
-                { label: "Idle", value: "Idle" },
-                { label: "Do not disturb", value: "DND" },
-              ]}
-              defaultValue={status || ""}
-              onChange={(value) => setStatus(value as "Idle" | "DND")}
-            />
-          </div>
+          )}
+        </Navbar.Section>
+        <Navbar.Section grow>{links}</Navbar.Section>
+        <Navbar.Section>
+          <Select
+            label="Select status"
+            data={[
+              { label: "Normal", value: "" },
+              { label: "Idle", value: "Idle" },
+              { label: "Do not disturb", value: "DND" },
+            ]}
+            defaultValue={status || ""}
+            onChange={(value) => setStatus(value as "Idle" | "DND")}
+          />
         </Navbar.Section>
       </Navbar>
       <Modal
@@ -265,22 +309,23 @@ const useStyles = createStyles((theme) => ({
     flexBasis: "min(100%, 70px)",
     backgroundColor:
       theme.colorScheme === "dark"
-        ? theme.colors.dark[7]
+        ? theme.colors.discord[0]
         : theme.colors.gray[2],
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    borderRight: `1px solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[3]
-    }`,
+    // borderRight: `1px solid ${
+    //   theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[3]
+    // }`,
   },
 
-  main: {
+  subNavbar: {
     flex: 1,
     backgroundColor:
       theme.colorScheme === "dark"
-        ? theme.colors.dark[6]
+        ? theme.colors.discord[1]
         : theme.colors.gray[1],
+    border: "none",
 
     [`@media (max-width: ${theme.breakpoints.xs}px)`]: {
       display: "none",
@@ -311,14 +356,9 @@ const useStyles = createStyles((theme) => ({
     },
   },
   titleContainer: {
-    boxShadow: theme.shadows.md,
-    cursor: "pointer",
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[4]
-          : theme.colors.gray[0],
-    },
+    height: 50,
+    boxShadow:
+      "0 1px 0 rgba(4,4,5,0.2), 0 1.5px 0 rgba(6,6,7,0.05), 0 2px 0 rgba(4,4,5,0.05)",
   },
   title: {
     // height: 60,
@@ -333,34 +373,23 @@ const useStyles = createStyles((theme) => ({
     justifyContent: "center",
     height: 60,
     paddingTop: theme.spacing.md,
-    borderBottom: `1px solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[3]
-    }`,
     marginBottom: theme.spacing.xl,
   },
 
   link: {
     boxSizing: "border-box",
-    display: "block",
-    textDecoration: "none",
-    borderTopRightRadius: theme.radius.md,
-    borderBottomRightRadius: theme.radius.md,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
     color:
       theme.colorScheme === "dark"
         ? theme.colors.dark[0]
         : theme.colors.gray[7],
-    padding: `0 ${theme.spacing.md}px`,
+    padding: `${theme.spacing.xs}px 10px`,
     fontSize: theme.fontSizes.sm,
-    marginRight: theme.spacing.md,
-    fontWeight: 500,
-    height: 44,
-    lineHeight: "44px",
+    cursor: "pointer",
 
     "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[5]
-          : theme.colors.gray[1],
       color: theme.colorScheme === "dark" ? theme.white : theme.black,
     },
   },
@@ -371,12 +400,41 @@ const useStyles = createStyles((theme) => ({
         variant: "filled",
         color: theme.primaryColor,
       }).background,
-      backgroundColor: theme.fn.variant({
-        variant: "filled",
-        color: theme.primaryColor,
-      }).background,
       color: theme.white,
     },
+  },
+  subLinkContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "3px",
+    padding: `0px ${theme.spacing.xs}px`,
+  },
+  subLink: {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[0]
+        : theme.colors.gray[7],
+    padding: `5px`,
+    cursor: "pointer",
+    borderRadius: theme.radius.sm,
+
+    "&:hover": {
+      color: theme.colorScheme === "dark" ? theme.white : theme.black,
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[4]
+          : theme.colors.gray[0],
+    },
+  },
+  subLinkActive: {
+    color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[4]
+        : theme.colors.gray[0],
   },
 }));
 

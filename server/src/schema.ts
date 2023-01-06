@@ -7,9 +7,8 @@ export interface User {
   password: string;
   status: Status;
   ownedServers?: Server[];
-  joinedServers?: Server[];
+  joinedServers?: ServerMember[];
   Message?: Message[];
-  Roles?: Role[];
   Invitation?: Invitation[];
 }
 
@@ -21,16 +20,26 @@ export interface Role {
   color: string;
   Server: Server;
   serverId: string;
-  Users?: User[];
-  Permission?: Permission[];
+  Permissions?: PermissionsOnRole[];
+  Users?: ServerMember[];
+}
+
+export interface PermissionsOnRole {
+  createdAt: Date;
+  updatedAt: Date;
+  Role: Role;
+  roleId: string;
+  Permission: Permission;
+  permissionId: string;
+  allowed: boolean;
 }
 
 export interface Permission {
   id: string;
   createdAt: Date;
   updatedAt: Date;
-  name: string;
-  Roles?: Role[];
+  name: PermissionTypes;
+  Roles?: PermissionsOnRole[];
 }
 
 export interface Invitation {
@@ -53,10 +62,46 @@ export interface Server {
   photo?: string;
   Owner: User;
   ownerId: string;
-  Members?: User[];
-  Messages?: Message[];
   Roles?: Role[];
   Invite?: Invitation[];
+  Channels?: Channel[];
+  Categories?: Category[];
+  Message?: Message[];
+  Members?: ServerMember[];
+}
+
+export interface ServerMember {
+  createdAt: Date;
+  updatedAt: Date;
+  Server: Server;
+  serverId: string;
+  User: User;
+  userId: string;
+  Role?: Role;
+  roleId?: string;
+}
+
+export interface Category {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  name: string;
+  Server: Server;
+  serverId: string;
+  Channels?: Channel[];
+}
+
+export interface Channel {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  name: string;
+  Server: Server;
+  serverId: string;
+  Messages?: Message[];
+  type: ChannelTypes;
+  Category?: Category;
+  categoryId?: string;
 }
 
 export interface Message {
@@ -72,6 +117,8 @@ export interface Message {
   ReplyTo?: Message;
   replyToId?: string;
   Replies?: Message[];
+  Channel?: Channel;
+  channelId?: string;
 }
 
 export enum Status {
@@ -79,4 +126,20 @@ export enum Status {
   Offline = 'Offline',
   Idle = 'Idle',
   DND = 'DND',
+}
+
+export enum PermissionTypes {
+  invitePeople = 'invitePeople',
+  kickPeople = 'kickPeople',
+  banPeople = 'banPeople',
+  manageRoles = 'manageRoles',
+  manageChannels = 'manageChannels',
+  manageServer = 'manageServer',
+  manageInvites = 'manageInvites',
+  manageMessages = 'manageMessages',
+}
+
+export enum ChannelTypes {
+  text = 'text',
+  voice = 'voice',
 }

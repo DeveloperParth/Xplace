@@ -20,18 +20,32 @@ router.get(
         where: {
           Members: {
             some: {
-              id: res.locals.user.id,
+              userId: res.locals.user.id,
             },
           },
         },
         include: {
           Owner: true,
+          Categories: {
+            include: {
+              Channels: true,
+            },
+          },
+          Channels: true,
           Members: {
             where: {
-              id: res.locals.user.id,
+              userId: res.locals.user.id,
             },
             include: {
-              Roles: true,
+              Role: {
+                include: {
+                  Permissions: {
+                    include: {
+                      Permission: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -56,7 +70,7 @@ router.get(
           Owner: true,
           Members: {
             include: {
-              Roles: true,
+              Role: true,
             },
           },
         },
@@ -79,8 +93,33 @@ router.post(
           name: req.body.name,
           ownerId: res.locals.user.id,
           Members: {
+            create: {
+              User: {
+                connect: {
+                  id: res.locals.user.id,
+                },
+              },
+            },
+          },
+        },
+      });
+      await db.category.create({
+        data: {
+          name: "General",
+          Channels: {
+            create: {
+              name: "general",
+              type: "text",
+              Server: {
+                connect: {
+                  id: server.id,
+                },
+              },
+            },
+          },
+          Server: {
             connect: {
-              id: res.locals.user.id,
+              id: server.id,
             },
           },
         },
@@ -92,6 +131,7 @@ router.post(
   }
 );
 
+// invite a user to a server
 router.post(
   "/join/:code",
   checkUser,
@@ -121,8 +161,12 @@ router.post(
         },
         data: {
           Members: {
-            connect: {
-              id: res.locals.user.id,
+            create: {
+              User: {
+                connect: {
+                  id: res.locals.user.id,
+                },
+              },
             },
           },
         },
@@ -133,7 +177,6 @@ router.post(
     }
   }
 );
-
 router.get(
   "/join/:code",
   async (req: any, res: Response, next: NextFunction) => {
@@ -155,7 +198,6 @@ router.get(
     }
   }
 );
-
 router.post(
   "/:id/invite",
   checkUser,
@@ -204,6 +246,7 @@ router.post(
   }
 );
 
+// Role
 router.post(
   "/:id/role",
   async (req: any, res: Response, next: NextFunction) => {
@@ -212,6 +255,16 @@ router.post(
         data: {
           name: req.body.name,
           color: req.body.color,
+          Permissions: {
+            createMany: {
+              data: req.body.permissions.map(
+                (permission: { id: string; allowed: boolean }) => ({
+                  id: permission.id,
+                  allowed: permission.allowed,
+                })
+              ),
+            },
+          },
           Server: {
             connect: {
               id: req.params.id,
@@ -225,47 +278,21 @@ router.post(
     }
   }
 );
-
-router.get(
-  "/:id/roles",
-  async (req: any, res: Response, next: NextFunction) => {
-    try {
-      const roles = await db.role.findMany({
-        where: {
-          Server: {
-            id: req.params.id,
-          },
+router.get("/:id/Role", async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const Role = await db.role.findMany({
+      where: {
+        Server: {
+          id: req.params.id,
         },
-      });
-      res.json({ roles });
-    } catch (error) {
-      next(error);
-    }
+      },
+    });
+    res.json({ Role });
+  } catch (error) {
+    next(error);
   }
-);
-
-router.get(
-  "/:id/messages",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const messages = await db.message.findMany({
-        where: {
-          serverId: req.params.id,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        include: {
-          user: true,
-          ReplyTo: true,
-        },
-      });
-      res.json({ messages });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
+});
+// members
 router.get(
   "/:id/members",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -277,13 +304,70 @@ router.get(
         include: {
           Members: {
             include: {
-              Roles: true,
+              User: {
+                select: {
+                  id: true,
+                  name: true,
+                  status: true,
+                },
+              },
+              Role: true,
             },
           },
           Owner: true,
         },
       });
       res.json({ members: members.Members });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
+  "/:id/category",
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const category = await db.category.create({
+        data: {
+          name: req.body.name,
+          Server: {
+            connect: {
+              id: req.params.id,
+            },
+          },
+        },
+      });
+      res.json({ category, message: "Category created" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+router.post(
+  "/:serverId/channel",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name, type, categoryId } = req.body;
+      console.log(categoryId);
+
+      const channel = await db.channel.create({
+        data: {
+          name: name,
+          Server: {
+            connect: {
+              id: req.params.serverId,
+            },
+          },
+          Category: {
+            connect: {
+              id: categoryId,
+            },
+          },
+          type: type,
+        },
+      });
+      res.json({ channel, message: "Channel created" });
     } catch (error) {
       next(error);
     }

@@ -10,8 +10,16 @@ type AuthState = {
   user: User | null;
   token: string | null;
   status: "Idle" | "DND" | null;
-  login: (email: string, password: string) => void;
-  register: (email: string, password: string, name: string) => void;
+  login: ({ email, password }: { email: string; password: string }) => void;
+  register: ({
+    email,
+    password,
+    name,
+  }: {
+    email: string;
+    password: string;
+    name: string;
+  }) => void;
   logout: () => void;
   setStatus: (status: "Idle" | "DND" | null) => void;
 };
@@ -24,12 +32,26 @@ export const useAuth = create(
       token: null,
       status: null,
       // actions
-      login: async (email: string, password: string) => {
+      login: async ({
+        email,
+        password,
+      }: {
+        email: string;
+        password: string;
+      }) => {
         const { user, token } = await loginUser(email, password);
 
         set({ user, token });
       },
-      register: async (email: string, password: string, name: string) => {
+      register: async ({
+        email,
+        password,
+        name,
+      }: {
+        email: string;
+        password: string;
+        name: string;
+      }) => {
         const { user, token } = await registerUser(email, password, name);
         set({ user, token });
       },

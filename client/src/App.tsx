@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import AuthRoute from "./components/AuthRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/Sidebar";
@@ -28,12 +28,20 @@ function App() {
   const setMembers = useServer((state) => state.setMembers);
   const setMessages = useServer((state) => state.setMessages);
   const server = useServer((state) => state.server);
+  console.log("🚀 ~ file: App.tsx:31 ~ App ~ server", server);
+  const currentChannel = useServer((state) => state.currentChannel);
   useEffect(() => {
-    user?.id && socket.emit("join", { status });
+    if (user?.id) socket.emit("join", { status });
     socket.on("message", (message: Message) => {
-      console.log(server?.id);
-
-      if (message.serverId === server?.id) {
+      if (message.userId === user?.id) return;
+      if (message.serverId !== server?.id) {
+        return showNotification({
+          title: message.user.name,
+          message: message.text,
+          color: "teal",
+        });
+      }
+      if (message.channelId !== currentChannel?.id) {
         return showNotification({
           title: message.user.name,
           message: message.text,
@@ -54,8 +62,7 @@ function App() {
       socket.off("members");
       socket.off("status");
     };
-  }, [socket]);
-
+  }, [socket, server]);
 
   return (
     <>
@@ -78,7 +85,15 @@ function App() {
         >
           <Routes>
             <Route
-              path="/"
+              path="/channels/@me"
+              element={
+                <ProtectedRoute>
+                  <h1> Home </h1>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/channels/:serverId/:channelId"
               element={
                 <ProtectedRoute>
                   <HomePage />
@@ -102,6 +117,12 @@ function App() {
                 </AuthRoute>
               }
             />
+            {/* <Route
+              path="*"
+              element={
+                <Navigate to="/channels/@me" />
+              }
+            /> */}
           </Routes>
         </Box>
       </Box>

@@ -9,7 +9,6 @@ import {
   Title,
   Text,
   Anchor,
-  Card,
   TextInput,
 } from "@mantine/core";
 function LoginPage() {
@@ -26,9 +25,16 @@ function LoginPage() {
   const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (type === "register") {
-      register(input.email, input.password, input.name);
+      register({
+        email: input.email,
+        password: input.password,
+        name: input.name,
+      });
     } else {
-      login(input.email, input.password);
+      login({
+        email: input.email,
+        password: input.password,
+      });
     }
   };
   const { classes } = useStyles();

@@ -10,9 +10,16 @@ function CreateMessage() {
   const [message, setMessage] = useState("");
   const queryClient = useQueryClient();
   const server = useServer((state) => state.server);
+  const currentChannel = useServer((state) => state.currentChannel);
   const replyingTo = useMessage((state) => state.replyingTo);
   const mutation = useMutation({
-    mutationFn: () => createMessage(server!.id, message, replyingTo?.id),
+    mutationFn: () =>
+      createMessage({
+        serverId: server?.id!,
+        channelId: currentChannel?.id!,
+        text: message,
+        replyTo: replyingTo?.id,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries(["messages"]);
     },

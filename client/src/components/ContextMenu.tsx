@@ -5,16 +5,21 @@ import { Menu } from "@mantine/core";
 import { IconEdit } from "@tabler/icons";
 import { IconTrash } from "@tabler/icons";
 import { IconArrowBackUp } from "@tabler/icons";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../store/useAuth";
 import { useMessage } from "../store/useMessage";
 import { useServer } from "../store/useServer";
+import { PermissionTypes } from "../types";
+import { IconHammer } from "@tabler/icons";
+
+const ContextMenuWidth = 200;
 
 const ContextMenuDemo = () => {
   const { classes } = useStyles();
   const setReplyingTo = useMessage((state) => state.setReplyingTo);
   const setEditing = useMessage((state) => state.setEditing);
   const messages = useServer((state) => state.messages);
+  const hasPermission = useServer((state) => state.hasPermission);
   const user = useAuth((state) => state.user);
   const [contextMenu, setContextMenu] = useState({
     x: 0,
@@ -38,9 +43,12 @@ const ContextMenuDemo = () => {
     e.preventDefault();
 
     e.path.some((el: HTMLElement) => {
-      if (el.id && el.id.startsWith("message-")) {
+      if (el.id && el.id.includes("-")) {
         setContextMenu({
-          x: e.clientX,
+          x:
+            e.clientX > document.body.clientWidth - ContextMenuWidth
+              ? e.clientX - ContextMenuWidth
+              : e.clientX,
           y: e.clientY,
           show: true,
           content: el.id,
@@ -51,20 +59,16 @@ const ContextMenuDemo = () => {
       return false;
     });
   };
-  if (contextMenu.show) {
-    const message = messages.find(
-      (message) => message.id === contextMenu.content.split("message-")[1]
-    );
-    return (
-      <div
-        className={classes.contextMenu}
-        style={{
-          top: contextMenu.y,
-          left: contextMenu.x,
-        }}
-      >
-        <Menu opened={true} width={170}>
-          <Menu.Dropdown color="dark" className={classes.menu}>
+  const MenuItems = () => {
+    const type = contextMenu.content.split("-")[0];
+
+    switch (type) {
+      case "message":
+        const message = messages.find(
+          (message) => message.id === contextMenu.content.split("message-")[1]
+        );
+        return (
+          <>
             <Menu.Item
               rightSection={<IconArrowBackUp />}
               onClick={() => {
@@ -73,7 +77,8 @@ const ContextMenuDemo = () => {
             >
               Reply
             </Menu.Item>
-            {message?.user.id === user?.id && (
+            {(message?.user.id === user?.id ||
+              hasPermission(PermissionTypes.manageMessages)) && (
               <>
                 <Menu.Item
                   rightSection={<IconEdit />}
@@ -88,6 +93,49 @@ const ContextMenuDemo = () => {
                 </Menu.Item>
               </>
             )}
+          </>
+        );
+      case "user":
+        return (
+          <>
+            <Menu.Item>View Profile</Menu.Item>
+            <Menu.Item>Send Message</Menu.Item>
+            {hasPermission(PermissionTypes.kickPeople) && (
+              <Menu.Item color="red" icon={<IconTrash />}>
+                Kick{" "}
+              </Menu.Item>
+            )}
+            {hasPermission(PermissionTypes.banPeople) && (
+              <Menu.Item color="red" icon={<IconHammer />}>
+                Ban
+              </Menu.Item>
+            )}
+          </>
+        );
+      case "server":
+        return (
+          <>
+            <Menu.Item>View Server</Menu.Item>
+            <Menu.Item>Invite People</Menu.Item>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+  if (contextMenu.show) {
+    return (
+      <div
+        className={classes.contextMenu}
+        style={{
+          top: contextMenu.y,
+          left: contextMenu.x,
+        }}
+      >
+        <Menu opened={true} width={ContextMenuWidth}>
+          <Menu.Dropdown color="dark" className={classes.menu}>
+            <MenuItems />
           </Menu.Dropdown>
         </Menu>
       </div>

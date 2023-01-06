@@ -2,69 +2,27 @@ import { Router, Response, Request, NextFunction } from "express";
 import checkUser from "../middlewares/checkUser";
 import db from "../db";
 import { io } from "../index";
+import ApiError from "../utils/ApiError";
 
 const router = Router();
-// router.get(
-//   "/:id/messages",
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//       const messages = await db.message.findMany({
-//         where: {
-//           serverId: req.params.id,
-//         },
-//         orderBy: {
-//           createdAt: "asc",
-//         },
-//         include: {
-//           ReplyTo: {
-//             include: {
-//               user: true,
-//             },
-//           },
-//           user: true,
-//         },
-//       });
-//       res.json({ messages });
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
-// );
-router.get(
-  "/:id/members",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const members = await db.server.findUnique({
-        where: {
-          id: req.params.id,
-        },
-        include: {
-          Members: true,
-          Owner: true,
-        },
-      });
-      res.json({ members });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
 router.post(
-  "/:id",
+  "/:serverId/:channelId",
   checkUser,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const { channelId, serverId } = req.params;
+      const { text, replyTo } = req.body;
       const message = await db.message.create({
         data: {
-          text: req.body.text,
-          ReplyTo: req.body.replyTo && {
+          text: text,
+          Channel: {
             connect: {
-              id: req.body.replyTo,
+              id: channelId,
             },
           },
           Server: {
             connect: {
-              id: req.params.id,
+              id: serverId,
             },
           },
           user: {
@@ -72,19 +30,30 @@ router.post(
               id: res.locals.user.id,
             },
           },
+          ReplyTo: replyTo
+            ? {
+                connect: {
+                  id: replyTo,
+                },
+              }
+            : undefined,
         },
         include: {
-          Server: true,
+          ReplyTo: {
+            include: {
+              user: true,
+            },
+          },
+          user: true,
         },
       });
-      io.to(req.params.id).emit("message", message);
+      io.to(serverId).emit("message", message);
       res.json({ message });
     } catch (error) {
       next(error);
     }
   }
 );
-
 router.put(
   "/:id",
   checkUser,
@@ -103,6 +72,25 @@ router.put(
         },
       });
       res.json({ message });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+router.delete(
+  "/:id",
+  checkUser,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const message = await db.message.findUnique({
+        where: { id: req.params.id },
+      });
+      if (!message) throw new ApiError("Message not found", 404);
+
+      await db.message.delete({
+        where: { id: req.params.id },
+      });
+      res.json({ message: "Deleted succesfully" });
     } catch (error) {
       next(error);
     }

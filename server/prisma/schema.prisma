@@ -18,38 +18,49 @@ enum Status {
 }
 
 model User {
-  id            String       @id @default(uuid())
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  email         String       @unique
+  id            String         @id @default(uuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  email         String         @unique
   name          String
   password      String
-  status        Status       @default(Offline)
-  ownedServers  Server[]     @relation("OwnedServers")
-  joinedServers Server[]     @relation("JoinedServers")
+  status        Status         @default(Offline)
+  ownedServers  Server[]       @relation("OwnedServers")
+  joinedServers ServerMember[]
   Message       Message[]
-  Roles         Role[]
   Invitation    Invitation[]
 }
 
 model Role {
-  id         String       @id @default(uuid())
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  name       String
-  color      String
-  Server     Server       @relation(fields: [serverId], references: [id])
-  serverId   String
-  Users      User[]
-  Permission Permission[]
+  id          String              @id @default(uuid())
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  name        String
+  color       String
+  Server      Server              @relation(fields: [serverId], references: [id])
+  serverId    String
+  Permissions PermissionsOnRole[]
+  Users       ServerMember[]
+}
+
+model PermissionsOnRole {
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Role         Role       @relation(fields: [roleId], references: [id])
+  roleId       String
+  Permission   Permission @relation(fields: [permissionId], references: [id])
+  permissionId String
+  allowed      Boolean    @default(false)
+
+  @@id([roleId, permissionId])
 }
 
 model Permission {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  name      String
-  Roles     Role[]
+  id        String              @id @default(uuid())
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  name      PermissionTypes
+  Roles     PermissionsOnRole[]
 }
 
 model Invitation {
@@ -65,17 +76,55 @@ model Invitation {
 }
 
 model Server {
-  id        String       @id @default(uuid())
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id         String         @id @default(uuid())
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  name       String
+  photo      String?
+  Owner      User           @relation("OwnedServers", fields: [ownerId], references: [id])
+  ownerId    String
+  Roles      Role[]
+  Invite     Invitation[]
+  Channels   Channel[]
+  Categories Category[]
+  Message    Message[]
+  Members    ServerMember[]
+}
+
+model ServerMember {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Server    Server   @relation(fields: [serverId], references: [id])
+  serverId  String
+  User      User     @relation(fields: [userId], references: [id])
+  userId    String
+  Role      Role?    @relation(fields: [roleId], references: [id])
+  roleId    String?
+
+  @@id([serverId, userId])
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   name      String
-  photo     String?
-  Owner     User         @relation("OwnedServers", fields: [ownerId], references: [id])
-  ownerId   String
-  Members   User[]       @relation("JoinedServers")
-  Messages  Message[]
-  Roles     Role[]
-  Invite    Invitation[]
+  Server    Server    @relation(fields: [serverId], references: [id])
+  serverId  String
+  Channels  Channel[]
+}
+
+model Channel {
+  id         String       @id @default(uuid())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  name       String
+  Server     Server       @relation(fields: [serverId], references: [id])
+  serverId   String
+  Messages   Message[]
+  type       ChannelTypes
+  Category   Category?    @relation(fields: [categoryId], references: [id])
+  categoryId String?
 }
 
 model Message {
@@ -91,4 +140,22 @@ model Message {
   ReplyTo   Message?  @relation("ReplyTo", fields: [replyToId], references: [id])
   replyToId String?
   Replies   Message[] @relation("ReplyTo")
+  Channel   Channel?  @relation(fields: [channelId], references: [id])
+  channelId String?
+}
+
+enum PermissionTypes {
+  invitePeople
+  kickPeople
+  banPeople
+  manageRoles
+  manageChannels
+  manageServer
+  manageInvites
+  manageMessages
+}
+
+enum ChannelTypes {
+  text
+  voice
 }

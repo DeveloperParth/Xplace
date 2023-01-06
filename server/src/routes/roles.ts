@@ -23,14 +23,27 @@ router.post(
         },
       });
       if (!user) throw new ApiError("User not found", 404);
-      await db.role.update({
+      const isMember = await db.serverMember.findUnique({
         where: {
-          id: req.params.id,
+          serverId_userId: {
+            serverId: role.serverId,
+            userId: user.id,
+          },
+        },
+      });
+      if (!isMember)
+        throw new ApiError("User is not a member of this server", 403);
+      await db.serverMember.update({
+        where: {
+          serverId_userId: {
+            serverId: role.serverId,
+            userId: user.id,
+          },
         },
         data: {
-          Users: {
+          Role: {
             connect: {
-              id: req.body.userId,
+              id: role.id,
             },
           },
         },

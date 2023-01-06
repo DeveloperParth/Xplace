@@ -3,8 +3,9 @@ import { useServer } from "../store/useServer";
 import CreateMessage from "../components/Messages/CreateMessage";
 import Members from "../components/Members";
 import { Box, Group } from "@mantine/core";
+
 function HomePage() {
-  const { server, userRoles } = useServer((state) => state);
+  const { server, setServer, setCurrentChannel } = useServer((state) => state);
 
   return (
     <>

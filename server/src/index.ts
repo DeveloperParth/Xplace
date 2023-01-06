@@ -1,4 +1,9 @@
-import express, { NextFunction, Request, Response } from "express";
+import express, {
+  ErrorRequestHandler,
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 import cors from "cors";
 import { config } from "dotenv";
 import { createServer } from "http";
@@ -7,8 +12,8 @@ import morgan from "morgan";
 import routes from "./routes";
 import ApiError from "./utils/ApiError";
 import prisma from "./db";
-import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import socketMiddleware from "./middlewares/socket";
+import ErrorHandler from "./middlewares/ErrorHandler";
 
 const app = express();
 const httpServer = createServer(app);
@@ -26,13 +31,7 @@ app.use("/public", express.static("public"));
 app.use(morgan("dev"));
 
 routes(app);
-app.use((err: ApiError, _: Request, res: Response, next: NextFunction) => {
-  console.error(err);
-  return res.status(err.status || 500).json({
-    message: err.message,
-    stack: process.env.NODE_ENV === "production" ? "🥞" : err.stack,
-  });
-});
+app.use(ErrorHandler as any);
 
 io.use(socketMiddleware);
 
@@ -71,7 +70,7 @@ io.on(
         .then((user) => {
           if (user) {
             user.joinedServers.forEach((server) => {
-              socket.join(server.id);
+              socket.join(server.serverId);
             });
           }
         });
@@ -98,17 +97,17 @@ io.on(
         .then((user) => {
           if (user) {
             user.joinedServers.forEach((server) => {
-              socket.to(server.id).emit("status");
+              socket.to(server.serverId).emit("status");
             });
           }
         });
     });
-    socket.on("members", (data) => {
-      socket.broadcast.emit("members", data);
-    });
-    socket.on("message", (server, message) => {
-      socket.broadcast.to(server).emit("message", message);
-    });
+    // socket.on("members", (data) => {
+    //   socket.broadcast.emit("members", data);
+    // });
+    // socket.on("message", (server, message) => {
+    //   socket.broadcast.to(server).emit("message", message);
+    // });
     socket.on("disconnect", async () => {
       // find the socket id and delete it
       await prisma.user.update({

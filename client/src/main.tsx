@@ -8,6 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import ContextMenuDemo from "./components/ContextMenu";
 import "./index.css";
+import { ModalsProvider } from "@mantine/modals";
 export const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -18,11 +19,21 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           withCSSVariables
           theme={{
             colorScheme: "dark",
+
+            colors: {
+              discord: ["#202225", "#2f3136", "#36393f"],
+            },
           }}
         >
           <NotificationsProvider zIndex={1001} />
-          <App />
           <ContextMenuDemo />
+          <ModalsProvider
+            modalProps={{
+              zIndex: 1000,
+            }}
+          >
+            <App />
+          </ModalsProvider>
         </MantineProvider>
         <ReactQueryDevtools position="bottom-right" />
       </QueryClientProvider>

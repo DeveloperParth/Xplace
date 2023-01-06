@@ -16,6 +16,7 @@ export async function registerUser(
   return data;
 }
 
+// Servers
 export async function getServers() {
   const { data } = await Api.get("/api/servers");
   return data;
@@ -33,6 +34,31 @@ export async function joinServer(code: string) {
   return data;
 }
 
+// Channels
+export async function getChannels(serverId: string) {
+  const { data } = await Api.get(`/api/servers/${serverId}/channels`);
+  return data;
+}
+export async function createChannel({
+  serverId,
+  name,
+  type,
+  categoryId,
+}: {
+  serverId: string;
+  name: string;
+  type: "text" | "voice";
+  categoryId?: string;
+}) {
+  const { data } = await Api.post(`/api/servers/${serverId}/channel`, {
+    name,
+    type,
+    categoryId,
+  });
+  return data;
+}
+
+// Invitations
 export async function createInvitation(serverId: string) {
   const { data } = await Api.post(`/api/servers/${serverId}/invite`);
   return data;
@@ -48,16 +74,30 @@ export async function getMembers(id: string) {
   return data;
 }
 
-export async function getMessages(serverId: string) {
-  const { data } = await Api.get(`/api/servers/${serverId}/messages`);
+export async function getMessages({
+  serverId,
+  channelId,
+}: {
+  serverId: string;
+  channelId: string;
+}) {
+  const { data } = await Api.get(
+    `/api/servers/${serverId}/${channelId}/messages`
+  );
   return data;
 }
-export async function createMessage(
-  serverId: string,
-  text: string,
-  replyTo?: string
-) {
-  const { data } = await Api.post(`/api/messages/${serverId}`, {
+export async function createMessage({
+  serverId,
+  channelId,
+  text,
+  replyTo,
+}: {
+  serverId: string;
+  channelId: string;
+  text: string;
+  replyTo?: string;
+}) {
+  const { data } = await Api.post(`/api/messages/${serverId}/${channelId}`, {
     text,
     replyTo,
   });
