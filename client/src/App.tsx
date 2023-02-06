@@ -7,9 +7,13 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 
 import { io } from "socket.io-client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "./store/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Box } from "@mantine/core";
 import InvitationPage from "./pages/InvitationPage";
 import ServerPage from "./pages/ServerPage";
@@ -28,8 +32,8 @@ function App() {
   const setMembers = useServer((state) => state.setMembers);
   const setMessages = useServer((state) => state.setMessages);
   const server = useServer((state) => state.server);
-  console.log("🚀 ~ file: App.tsx:31 ~ App ~ server", server);
   const currentChannel = useServer((state) => state.currentChannel);
+
   useEffect(() => {
     if (user?.id) socket.emit("join", { status });
     socket.on("message", (message: Message) => {

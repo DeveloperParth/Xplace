@@ -3,8 +3,8 @@ import { TextInput, Button, ActionIcon } from "@mantine/core";
 import { IconPlus } from "@tabler/icons";
 import { useMutation } from "@tanstack/react-query";
 import { createChannel } from "../../api";
-import { queryClient } from "../../main";
 import { useState } from "react";
+import { queryClient } from "../../main";
 const CreateChannelButton = ({
   categoryId,
   serverId,

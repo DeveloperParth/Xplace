@@ -2,8 +2,8 @@ import create from "zustand";
 import { persist } from "zustand/middleware";
 import { loginUser, registerUser } from "../api";
 import { socket } from "../App";
-import { queryClient } from "../main";
 import { User } from "../types";
+import { queryClient } from "../main";
 
 // zustand hook
 type AuthState = {
@@ -39,6 +39,7 @@ export const useAuth = create(
         email: string;
         password: string;
       }) => {
+
         const { user, token } = await loginUser(email, password);
 
         set({ user, token });
@@ -60,6 +61,7 @@ export const useAuth = create(
       },
       setStatus: (status = null as "Idle" | "DND" | null) => {
         socket.emit("status", { status });
+
         queryClient.invalidateQueries(["members"]);
         set({ status });
       },

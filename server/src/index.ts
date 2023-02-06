@@ -14,7 +14,6 @@ import ApiError from "./utils/ApiError";
 import prisma from "./db";
 import socketMiddleware from "./middlewares/socket";
 import ErrorHandler from "./middlewares/ErrorHandler";
-
 const app = express();
 const httpServer = createServer(app);
 export const io = new Server(httpServer, {
@@ -31,6 +30,7 @@ app.use("/public", express.static("public"));
 app.use(morgan("dev"));
 
 routes(app);
+
 app.use(ErrorHandler as any);
 
 io.use(socketMiddleware);
@@ -102,12 +102,6 @@ io.on(
           }
         });
     });
-    // socket.on("members", (data) => {
-    //   socket.broadcast.emit("members", data);
-    // });
-    // socket.on("message", (server, message) => {
-    //   socket.broadcast.to(server).emit("message", message);
-    // });
     socket.on("disconnect", async () => {
       // find the socket id and delete it
       await prisma.user.update({
