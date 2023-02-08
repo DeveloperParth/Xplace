@@ -77,7 +77,7 @@ export interface ServerMember {
   serverId: string;
   User: User;
   userId: string;
-  Role?: Role;
+  Roles: Role[];
   roleId?: string;
 }
 

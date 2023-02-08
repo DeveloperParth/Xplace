@@ -11,6 +11,7 @@ import { useMessage } from "../store/useMessage";
 import { useServer } from "../store/useServer";
 import { PermissionTypes } from "../types";
 import { IconHammer } from "@tabler/icons";
+import { useContextMenu } from "../store/useContextMenu";
 
 const ContextMenuWidth = 200;
 
@@ -21,12 +22,9 @@ const ContextMenuDemo = () => {
   const messages = useServer((state) => state.messages);
   const hasPermission = useServer((state) => state.hasPermission);
   const user = useAuth((state) => state.user);
-  const [contextMenu, setContextMenu] = useState({
-    x: 0,
-    y: 0,
-    show: false,
-    content: "",
-  });
+  const { show, x, y, type, setContextMenu, content } = useContextMenu(
+    (state) => state
+  );
   useEffect(() => {
     document.addEventListener("contextmenu", contextMenuHandler);
     document.addEventListener("click", clickHandler);
@@ -37,36 +35,25 @@ const ContextMenuDemo = () => {
     };
   }, []);
   const clickHandler = (e: any) => {
-    setContextMenu({ x: 0, y: 0, show: false, content: "" });
+    setContextMenu({ x: 0, y: 0, show: false, type: null });
   };
   const contextMenuHandler = (e: any) => {
     e.preventDefault();
-
-    e.path.some((el: HTMLElement) => {
-      if (el.id && el.id.includes("-")) {
-        setContextMenu({
-          x:
-            e.clientX > document.body.clientWidth - ContextMenuWidth
-              ? e.clientX - ContextMenuWidth
-              : e.clientX,
-          y: e.clientY,
-          show: true,
-          content: el.id,
-        });
-        return true;
-      }
-      setContextMenu({ x: 0, y: 0, show: false, content: "" });
-      return false;
+    setContextMenu({
+      x:
+        e.clientX > document.body.clientWidth - ContextMenuWidth
+          ? e.clientX - ContextMenuWidth
+          : e.clientX,
+      y: e.clientY,
+      show: true,
     });
   };
   const MenuItems = () => {
-    const type = contextMenu.content.split("-")[0];
-
     switch (type) {
-      case "message":
-        const message = messages.find(
-          (message) => message.id === contextMenu.content.split("message-")[1]
-        );
+      case "MESSAGE":
+        const message = messages.find((message) => message.id === content);
+        console.log({ content });
+
         return (
           <>
             <Menu.Item
@@ -95,7 +82,7 @@ const ContextMenuDemo = () => {
             )}
           </>
         );
-      case "user":
+      case "USER":
         return (
           <>
             <Menu.Item>View Profile</Menu.Item>
@@ -112,7 +99,7 @@ const ContextMenuDemo = () => {
             )}
           </>
         );
-      case "server":
+      case "SERVER":
         return (
           <>
             <Menu.Item>View Server</Menu.Item>
@@ -124,13 +111,13 @@ const ContextMenuDemo = () => {
         return null;
     }
   };
-  if (contextMenu.show) {
+  if (show) {
     return (
       <div
         className={classes.contextMenu}
         style={{
-          top: contextMenu.y,
-          left: contextMenu.x,
+          top: y,
+          left: x,
         }}
       >
         <Menu opened={true} width={ContextMenuWidth}>

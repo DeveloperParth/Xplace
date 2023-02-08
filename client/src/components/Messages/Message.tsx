@@ -15,6 +15,7 @@ import moment from "moment";
 import { useMessage } from "../../store/useMessage";
 import { IconArrowRight } from "@tabler/icons";
 import { useAuth } from "../../store/useAuth";
+import { useContextMenu } from "../../store/useContextMenu";
 // prop types
 type Props = {
   messageObject: IMessage;
@@ -23,13 +24,8 @@ type Props = {
 };
 
 function Message({ messageObject, isSameUser }: Props) {
-  const {
-    user,
-    createdAt,
-    ReplyTo,
-    replyToId,
-    id,
-  } = messageObject;
+  const { user, createdAt, ReplyTo, replyToId, id } = messageObject;
+  const handleContextMenu = useContextMenu((state) => state.handleContextMenu);
   const { classes, cx } = useStyles();
 
   const scrollToMessage = () => {
@@ -54,6 +50,9 @@ function Message({ messageObject, isSameUser }: Props) {
       <div
         className={cx(classes.messageWrapper, classes.sameUser)}
         id={`message-${id}`}
+        onContextMenu={(e) =>
+          handleContextMenu({ e, type: "MESSAGE", content: id })
+        }
       >
         <Group>
           <Tooltip
@@ -83,7 +82,13 @@ function Message({ messageObject, isSameUser }: Props) {
     );
   return (
     <>
-      <div className={classes.messageWrapper} id={`message-${id}`}>
+      <div
+        className={classes.messageWrapper}
+        id={`message-${id}`}
+        onContextMenu={(e) =>
+          handleContextMenu({ e, type: "MESSAGE", content: id })
+        }
+      >
         {replyToId && (
           <>
             <Group spacing="xs" onClick={scrollToMessage}>
@@ -163,7 +168,6 @@ const MassageButtons = ({ messageObject }: { messageObject: IMessage }) => {
   );
 };
 const MainMessageSection = ({ messageObject }: { messageObject: IMessage }) => {
-  
   const { id, text: message, isEdited, updatedAt } = messageObject;
   const { classes } = useStyles();
   const { setEditing, editing, editMessage } = useMessage((state) => state);
@@ -285,6 +289,5 @@ const useStyles = createStyles((theme) => ({
     transform: "translate(-50%, -50%)",
   },
 }));
-
 
 export default Message;

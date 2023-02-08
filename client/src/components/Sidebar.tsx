@@ -29,9 +29,11 @@ import { IconSettings } from "@tabler/icons";
 import { showNotification } from "@mantine/notifications";
 import CreateChannelButton from "./Modals/CreateChannelButton";
 import { IconHash } from "@tabler/icons";
+import { useContextMenu } from "../store/useContextMenu";
 
 function Sidebar() {
   const navigate = useNavigate();
+  const handleContextMenu = useContextMenu((state) => state.handleContextMenu);
   const { serverId, channelId } = useParams<{
     serverId: string;
     channelId: string;
@@ -102,6 +104,9 @@ function Sidebar() {
           className={cx(classes.mainLink, {
             [classes.mainLinkActive]: active === server.id,
           })}
+          onContextMenu={(e) =>
+            handleContextMenu({ e, type: "SERVER", content: server.id })
+          }
         >
           <Avatar
             size="lg"

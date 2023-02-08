@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMembers } from "../api";
 import { useServer } from "../store/useServer";
 import { ServerMember } from "../types";
+import { useContextMenu } from "../store/useContextMenu";
 
 const STATUS = {
   Online: "green",
@@ -22,6 +23,7 @@ const STATUS = {
 
 function Members() {
   const { server } = useServer((state) => state);
+  const handleContextMenu = useContextMenu((state) => state.handleContextMenu);
   const { data, isLoading } = useQuery({
     queryKey: ["members", server?.id],
     queryFn: () => getMembers(server!.id),
@@ -31,6 +33,9 @@ function Members() {
       key={member.userId + member.serverId}
       style={{ cursor: "pointer" }}
       id={`user-${member.userId}`}
+      onContextMenu={(e) =>
+        handleContextMenu({ e, type: "USER", content: member.userId })
+      }
     >
       <Indicator
         dot
@@ -49,7 +54,9 @@ function Members() {
         />
       </Indicator>
       <div className="ml-3">
-        <Text sx={{ color: member.Role?.color }}>{member.User.name}</Text>
+        <Text sx={{ color: member.Roles?.at(0)?.color }}>
+          {member.User.name}
+        </Text>
       </div>
     </Group>
   ));

@@ -11,8 +11,7 @@ import { useAuth } from "./useAuth";
 
 // type definitions for keyvalue pairs
 type Permission = {
-  name: PermissionTypes;
-  allowed: boolean;
+  [key in PermissionTypes]?: boolean;
 };
 // zustand hook
 type ServerState = {
@@ -21,13 +20,13 @@ type ServerState = {
   messages: Message[];
   members: User[];
   roles: Role[];
-  permissions: Permission[];
+  permissions: Permission;
   isOwner: boolean;
   setMembers: (members: User[]) => void;
   setServer: (server: Server | null) => void;
   setCurrentChannel: (channel: Channel | null) => void;
   setMessages: (callback: (messages: Message[]) => Message[]) => void;
-  hasPermission: (permission: string) => boolean;
+  hasPermission: (permission: PermissionTypes) => boolean;
 };
 
 // const log = (config) => (set: , get, api) =>
@@ -54,13 +53,33 @@ export const useServer = create<ServerState>((set, get) => ({
   setServer: (server: Server | null) => {
     const isOwner = useAuth.getState().user?.id === server?.ownerId;
 
+    // const permissions = server?.Members?.[0]?.Roles?.map((role) => {
+    //   return role.Permissions?.map((permission) => {
+    //     return {
+    //       name: permission.Permission.name,
+    //       allowed: permission.allowed,
+    //     };
+    //   });
+    // });
+    // console.log(permissions);
+    const permissions: any = {};
+    server?.Members?.[0]?.Roles?.map((role) => {
+      role.Permissions?.map((permission) => {
+        const name = permission.Permission.name;
+        if (permissions[name] && !permissions[name].allowed) {
+          permissions[name].allowed = permission.allowed;
+        } else if (!permissions[name]) {
+          permissions[name] = permission.allowed;
+        }
+      });
+    });
+    console.log(permissions);
+
     set({
       server,
       roles: server?.Roles || [],
       isOwner,
-      permissions: server?.Members?.[0]?.Role?.Permissions?.map((p) => {
-        return { name: p.Permission.name, allowed: p.allowed } as Permission;
-      }) || [],
+      permissions,
     });
   },
   setCurrentChannel: (channel: Channel | null) => {
@@ -76,9 +95,6 @@ export const useServer = create<ServerState>((set, get) => ({
     return set({ roles });
   },
   hasPermission: (permission) => {
-    return (
-      get().permissions.find((p) => p.name === permission)?.allowed ||
-      get().isOwner
-    );
+    return get().permissions[permission] || get().isOwner;
   },
 }));
