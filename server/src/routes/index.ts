@@ -1,11 +1,11 @@
 import { Application } from "express";
 
-import auth from "./auth";
-import message from "./messages";
-import users from "./users";
-import servers from "./server";
-import roles from "./roles";
-import channels from "./channels";
+import auth from "./auth.routes";
+import message from "./messages.routes";
+import users from "./users.routes";
+import servers from "./server.routes";
+import roles from "./roles.routes";
+import channels from "./channels.routes";
 
 export default function routes(app: Application): void {
   app.use("/api/auth", auth);

@@ -64,12 +64,12 @@ io.on(
             id: socket.userId,
           },
           include: {
-            joinedServers: true,
+            JoinedServers: true,
           },
         })
         .then((user) => {
           if (user) {
-            user.joinedServers.forEach((server) => {
+            user.JoinedServers.forEach((server) => {
               socket.join(server.serverId);
             });
           }
@@ -91,12 +91,12 @@ io.on(
             id: socket.userId,
           },
           include: {
-            joinedServers: true,
+            JoinedServers: true,
           },
         })
         .then((user) => {
           if (user) {
-            user.joinedServers.forEach((server) => {
+            user.JoinedServers.forEach((server) => {
               socket.to(server.serverId).emit("status");
             });
           }
