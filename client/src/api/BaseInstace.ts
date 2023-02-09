@@ -1,5 +1,6 @@
 import Axios from "axios";
 import { useAuth } from "../store/useAuth";
+import { showNotification } from "@mantine/notifications";
 
 const axios = Axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:9000",
@@ -30,6 +31,12 @@ axios.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error.response.status === 400) {
+      showNotification({
+        title: "Error",
+        message: error.response.data.message,
+      });
+    }
     return Promise.reject(error);
   }
 );

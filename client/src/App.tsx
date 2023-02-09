@@ -32,6 +32,7 @@ function App() {
   const setMembers = useServer((state) => state.setMembers);
   const setMessages = useServer((state) => state.setMessages);
   const server = useServer((state) => state.server);
+  const setServer = useServer((state) => state.setServer);
   const currentChannel = useServer((state) => state.currentChannel);
 
   useEffect(() => {
@@ -61,10 +62,82 @@ function App() {
       queryClient.invalidateQueries(["members"]);
     });
 
+    socket.on("message update", (data: WSPayload.MessageUpdate) => {
+      if (currentChannel?.id === data.message.channelId) {
+        setMessages((messages) =>
+          messages.map((message) => {
+            if (message.id === data.message.id) {
+              return { ...message, text: data.message.text };
+            }
+            return message;
+          })
+        );
+      }
+    });
+
+    socket.on("message delete", (data: WSPayload.MessageDelete) => {
+      console.log(data);
+
+      if (currentChannel?.id === data.message.channelId) {
+        setMessages((messages) =>
+          messages.filter((message) => message.id !== data.message.id)
+        );
+      }
+    });
+
+    socket.on("channel create", (data: WSPayload.ChannelCreate) => {
+      if (server && server.id === data.channel.serverId) {
+        const newServer: Entity.Server = {
+          ...server,
+          Channels: [...(server.Channels || []), data.channel],
+          Categories: server.Categories?.map((category) => {
+            if (category.id === data.channel.categoryId) {
+              return {
+                ...category,
+                Channels: [...(category.Channels || []), data.channel],
+              };
+            }
+            return category;
+          }),
+        };
+        setServer(newServer);
+      } else {
+        queryClient.invalidateQueries(["servers"]);
+      }
+    });
+
+    socket.on("channel delete", (data: WSPayload.ChannelDelete) => {
+      if (server?.id !== data.channel.serverId) {
+        queryClient.invalidateQueries(["servers"]);
+      }
+      if (server?.id === data.channel.serverId) {
+        const newServer: Entity.Server = {
+          ...server,
+          Channels: server.Channels?.filter(
+            (channel) => channel.id !== data.channel.id
+          ),
+          Categories: server.Categories?.map((category) => {
+            return {
+              ...category,
+              Channels: category.Channels?.filter(
+                (channel) => channel.id !== data.channel.id
+              ),
+            };
+          }),
+        };
+        setServer(newServer);
+      }
+      if (currentChannel?.id === data.channel.id) {
+        return <Navigate to="/channels/@me" />;
+      }
+    });
+
     return () => {
       socket.off("message");
       socket.off("members");
       socket.off("status");
+      socket.off("message update");
+      socket.off("message delete");
     };
   }, [socket, server]);
 

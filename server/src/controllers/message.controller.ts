@@ -39,8 +39,7 @@ export const createMessage = async (
   next: NextFunction
 ) => {
   try {
-    const { channelId, serverId } = req.params;
-    const { text, replyTo } = req.body;
+    const { text, replyTo, channelId, serverId } = req.body;
     const message = await db.message.create({
       data: {
         text: text,
@@ -101,7 +100,10 @@ export const updateMesasge = async (
         Server: true,
       },
     });
-    res.json({ message });
+    io.to(message.Server.id).emit("message update", {
+      message: message,
+    });
+    return res.json({ message });
   } catch (error) {
     next(error);
   }
@@ -118,6 +120,9 @@ export const deleteMessage = async (
     });
     if (!message) throw new ApiError("Message not found", 404);
 
+    io.to(message.serverId).emit("message delete", {
+      message: message,
+    });
     await db.message.delete({
       where: { id: req.params.id },
     });

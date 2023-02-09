@@ -10,7 +10,7 @@ import channels from "./channels.routes";
 export default function routes(app: Application): void {
   app.use("/api/auth", auth);
   app.use("/api/users", users);
-  app.use("/api/messages", message);
+  app.use("/api/", message);
   app.use("/api", channels);
   app.use("/api/servers", servers);
   app.use("/api/roles", roles);

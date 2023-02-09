@@ -67,7 +67,6 @@ function Sidebar() {
   };
   const handleServerChange = async (server: Server) => {
     setServer(server);
-    console.log(server);
 
     queryClient.invalidateQueries(["messages"]);
     const channel =
@@ -119,7 +118,12 @@ function Sidebar() {
   const links =
     data &&
     server?.Categories?.map((category: Category, i: number) => (
-      <div key={category.id}>
+      <div
+        key={category.id}
+        // onContextMenu={(e) =>
+        //   handleContextMenu({ e, type: "CATEGORY", content: category.id })
+        // }
+      >
         <div className={classes.link}>
           {category.name}
           {hasPermission(PermissionTypes.manageChannels) && (
@@ -140,6 +144,9 @@ function Sidebar() {
                 setActiveLink(channel.id);
                 handleChannelChange(channel);
               }}
+              onContextMenu={(e) =>
+                handleContextMenu({ e, type: "CHANNEL", content: channel.id })
+              }
             >
               <IconHash />
               {channel.name}

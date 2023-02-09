@@ -1,65 +1,25 @@
 import {
-  Avatar,
   Group,
   Navbar,
   Stack,
   Title,
-  Text,
-  Indicator,
   Skeleton,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { getMembers } from "../api";
-import { useServer } from "../store/useServer";
-import { ServerMember } from "../types";
-import { useContextMenu } from "../store/useContextMenu";
+import { getMembers } from "../../api";
+import { useServer } from "../../store/useServer";
+import { ServerMember } from "../../types";
+import Member from "./Member";
 
-const STATUS = {
-  Online: "green",
-  Idle: "yellow",
-  DND: "red",
-  Offline: "gray",
-};
+
 
 function Members() {
   const { server } = useServer((state) => state);
-  const handleContextMenu = useContextMenu((state) => state.handleContextMenu);
   const { data, isLoading } = useQuery({
     queryKey: ["members", server?.id],
     queryFn: () => getMembers(server!.id),
   });
-  const members = data?.members?.map((member: ServerMember) => (
-    <Group
-      key={member.userId + member.serverId}
-      style={{ cursor: "pointer" }}
-      id={`user-${member.userId}`}
-      onContextMenu={(e) =>
-        handleContextMenu({ e, type: "USER", content: member.userId })
-      }
-    >
-      <Indicator
-        dot
-        inline
-        size={16}
-        offset={7}
-        position="bottom-end"
-        color={STATUS[member.User.status]}
-        withBorder
-      >
-        <Avatar
-          src="https://i.pravatar.cc/300"
-          alt="avatar"
-          size="lg"
-          radius="xl"
-        />
-      </Indicator>
-      <div className="ml-3">
-        <Text sx={{ color: member.Roles?.at(0)?.color }}>
-          {member.User.name}
-        </Text>
-      </div>
-    </Group>
-  ));
+  const members = data?.members?.map((member: ServerMember) => <Member key={member.id} member={member}/>);
   return (
     <Navbar
       left="unset"

@@ -15,7 +15,7 @@ function LoginPage() {
   const [input, setInput] = React.useState({
     email: "",
     password: "",
-    name: "",
+    channelName: "",
   });
   const [type, setType] = React.useState<"login" | "register">("login");
   const { login, register } = useAuth((state) => state);

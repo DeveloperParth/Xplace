@@ -1,6 +1,14 @@
 import create from "zustand";
+import { ContextMenuWidth } from "../components/ContextMenu";
 
-type TypeStates = "USER" | "CHANNEL" | "SERVER" | "MESSAGE" | "ROLE" | null;
+type TypeStates =
+  | "USER"
+  | "CHANNEL"
+  | "SERVER"
+  | "MESSAGE"
+  | "ROLE"
+  | "CHANNEL"
+  | null;
 
 interface ContextMenuState {
   show: boolean;
@@ -33,7 +41,9 @@ export const useContextMenu = create<ContextMenuState>((set) => ({
   handleContextMenu: ({ e, type, content }) => {
     e.preventDefault();
     set((prevState) => ({
-      x: e.clientX,
+      x:  e.clientX > document.body.clientWidth - ContextMenuWidth
+      ? e.clientX - ContextMenuWidth
+      : e.clientX,
       y: e.clientY,
       show: true,
       type,

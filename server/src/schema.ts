@@ -6,9 +6,9 @@ export interface User {
   name: string;
   password: string;
   status: Status;
-  ownedServers?: Server[];
-  joinedServers?: ServerMember[];
-  Message?: Message[];
+  OwnedServers?: Server[];
+  JoinedServers?: ServerMember[];
+  Messages?: Message[];
   Invitation?: Invitation[];
 }
 
@@ -18,6 +18,7 @@ export interface Role {
   updatedAt: Date;
   name: string;
   color: string;
+  position: number;
   Server: Server;
   serverId: string;
   Permissions?: PermissionsOnRole[];
@@ -71,14 +72,14 @@ export interface Server {
 }
 
 export interface ServerMember {
+  id: string;
   createdAt: Date;
   updatedAt: Date;
   Server: Server;
   serverId: string;
   User: User;
   userId: string;
-  Role?: Role;
-  roleId?: string;
+  Roles?: Role[];
 }
 
 export interface Category {

@@ -58,6 +58,11 @@ export async function createChannel({
   return data;
 }
 
+export async function deleteChannel(id: string) {
+  const { data } = await Api.delete(`/api/channels/${id}`);
+  return data;
+}
+
 // Invitations
 export async function createInvitation(serverId: string) {
   const { data } = await Api.post(`/api/servers/${serverId}/invite`);
@@ -97,14 +102,21 @@ export async function createMessage({
   text: string;
   replyTo?: string;
 }) {
-  const { data } = await Api.post(`/api/messages/${serverId}/${channelId}`, {
+  const { data } = await Api.post(`/api/messages/`, {
     text,
     replyTo,
+    serverId,
+    channelId,
   });
   return data;
 }
 
 export async function updateMessage(id: string, text: string) {
   const { data } = await Api.put(`/api/messages/${id}`, { text });
+  return data;
+}
+
+export async function deleteMessage(id: string) {
+  const { data } = await Api.delete(`/api/messages/${id}`);
   return data;
 }

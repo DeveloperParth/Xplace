@@ -12,20 +12,16 @@ const CreateChannelButton = ({
   categoryId: string;
   serverId: string;
 }) => {
-  const [input, setInput] = useState<{
-    name: string;
-    type: "text" | "voice";
-    categoryId: string;
-    serverId: string;
-  }>({
-    name: "",
-    type: "text",
-    serverId,
-    categoryId,
-  });
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await createChannelMutation.mutateAsync(input);
+    const nameInput = e.currentTarget.elements[0] as HTMLInputElement;
+    const channelName = nameInput.value;
+    await createChannelMutation.mutateAsync({
+      name: channelName,
+      type: "voice",
+      categoryId,
+      serverId,
+    });
   };
 
   const showModal = () =>
@@ -38,11 +34,6 @@ const CreateChannelButton = ({
             label="Channel Name"
             // value={input.channelName}
             required
-            onChange={(e) => {
-              setInput((prev) => {
-                return { ...prev, name: e.target.value };
-              });
-            }}
           />
           <Button
             mt="md"

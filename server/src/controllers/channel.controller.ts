@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import db from "../db";
+import { io } from "../index";
 export const updateChannel = async (
   req: Request,
   res: Response,
@@ -29,11 +30,11 @@ export const createChannel = async (
 ) => {
   try {
     const { name, type, categoryId } = req.body;
-    console.log(categoryId);
+    console.log(name, "name");
 
     const channel = await db.channel.create({
       data: {
-        name: name,
+        name,
         Server: {
           connect: {
             id: req.params.serverId,
@@ -47,7 +48,32 @@ export const createChannel = async (
         type: type,
       },
     });
+    io.to(req.params.serverId).emit("channel create", { channel });
     res.json({ channel, message: "Channel created" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteChannel = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const channel = await db.channel.delete({
+      where: {
+        id,
+      },
+    });
+    await db.message.deleteMany({
+      where: {
+        channelId: id,
+      },
+    });
+    io.to(channel.serverId).emit("channel delete", { channel });
+    res.json({ channel, message: "Channel deleted" });
   } catch (error) {
     next(error);
   }

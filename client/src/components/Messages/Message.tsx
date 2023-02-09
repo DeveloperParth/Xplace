@@ -10,12 +10,14 @@ import { createStyles } from "@mantine/core";
 import { IconTrash } from "@tabler/icons";
 import { IconEdit } from "@tabler/icons";
 import { IconArrowBackUp } from "@tabler/icons";
-import { Message as IMessage } from "../../types";
+import { Message as IMessage, PermissionTypes } from "../../types";
 import moment from "moment";
 import { useMessage } from "../../store/useMessage";
 import { IconArrowRight } from "@tabler/icons";
 import { useAuth } from "../../store/useAuth";
 import { useContextMenu } from "../../store/useContextMenu";
+import { deleteMessage } from "../../api";
+import { useServer } from "../../store/useServer";
 // prop types
 type Props = {
   messageObject: IMessage;
@@ -135,6 +137,8 @@ const MassageButtons = ({ messageObject }: { messageObject: IMessage }) => {
   const { user } = messageObject;
   const loggedUser = useAuth((state) => state.user);
   const { setEditing, setReplyingTo } = useMessage((state) => state);
+  const setMessages = useServer((state) => state.setMessages);
+  const hasPermission = useServer((state) => state.hasPermission);
 
   const { classes, cx } = useStyles();
 
@@ -144,16 +148,21 @@ const MassageButtons = ({ messageObject }: { messageObject: IMessage }) => {
   const handleEdit = () => {
     setEditing(messageObject);
   };
-  const handleDelete = () => {
-    console.log("delete");
+  const handleDelete = async () => {
+    await deleteMessage(messageObject.id);
+    setMessages((messages) =>
+      messages.filter((m) => m.id !== messageObject.id)
+    );
   };
+  const hasManageMessagePermission =
+    loggedUser?.id === user.id || hasPermission(PermissionTypes.manageMessages);
   return (
     <div className={cx(classes.messageButtons, "message-buttons")}>
       <Group spacing={0}>
         <SingleButton tooltip="Reply" onClick={handleReply}>
           <IconArrowBackUp size={24} />
         </SingleButton>
-        {loggedUser?.id === user.id && (
+        {hasManageMessagePermission && (
           <>
             <SingleButton tooltip="Edit" onClick={handleEdit}>
               <IconEdit size={24} />
