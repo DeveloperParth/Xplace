@@ -120,3 +120,42 @@ export async function deleteMessage(id: string) {
   const { data } = await Api.delete(`/api/messages/${id}`);
   return data;
 }
+
+export async function getRoles(id: string) {
+  const { data } = await Api.get<Entity.Role[]>(`/api/servers/${id}/roles`);
+  return data;
+}
+
+export async function addUserToRole({
+  serverId,
+  userId,
+  roleId,
+}: {
+  serverId: string;
+  userId: string;
+  roleId: string;
+}) {
+  const { data } = await Api.patch(`/api/roles/add-user`, {
+    serverId,
+    userId,
+    roleId,
+  });
+  return data;
+}
+
+export async function removeUserFromRole({
+  serverId,
+  userId,
+  roleId,
+}: {
+  serverId: string;
+  userId: string;
+  roleId: string;
+}) {
+  const { data } = await Api.patch(`/api/roles/remove-user`, {
+    serverId,
+    userId,
+    roleId,
+  });
+  return data;
+}

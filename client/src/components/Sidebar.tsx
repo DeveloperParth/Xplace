@@ -30,6 +30,8 @@ import { showNotification } from "@mantine/notifications";
 import CreateChannelButton from "./Modals/CreateChannelButton";
 import { IconHash } from "@tabler/icons";
 import { useContextMenu } from "../store/useContextMenu";
+import { openModal } from "@mantine/modals";
+import ServerSettingsButton from "./Modals/ServerSettingsButton";
 
 function Sidebar() {
   const navigate = useNavigate();
@@ -233,12 +235,7 @@ function Sidebar() {
                     Invite people
                   </Menu.Item>
                 )}
-                <Menu.Item
-                  icon={<IconSettings size={18} />}
-                  onClick={() => navigate(`/server/${server?.id}/settings`)}
-                >
-                  Server settings
-                </Menu.Item>
+                <ServerSettingsButton />
               </Menu.Dropdown>
             </Menu>
           )}

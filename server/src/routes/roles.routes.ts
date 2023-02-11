@@ -4,8 +4,9 @@ import checkUser from "../middlewares/checkUser";
 
 const router = Router();
 
-router.post("/:id/user", checkUser, roleController.addUserToRole);
+router.patch("/add-user", checkUser, roleController.addUserToRole);
 
 router.get("/:id", checkUser, roleController.getSingleRole);
 
+router.patch("/remove-user", checkUser, roleController.removeUserFromRole);
 export default router;

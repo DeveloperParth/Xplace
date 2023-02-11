@@ -21,7 +21,7 @@ router.post("/:id/invite", checkUser, inviteController.createInvite);
 
 // Role
 router.post("/:id/role", checkUser, roleController.createRole);
-router.get("/:id/Role", checkUser, roleController.getRoles);
+router.get("/:id/roles", checkUser, roleController.getRoles);
 // members
 router.get("/:id/members", checkUser, serverController.getMembers);
 

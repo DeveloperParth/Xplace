@@ -1,17 +1,9 @@
-import {
-  Group,
-  Navbar,
-  Stack,
-  Title,
-  Skeleton,
-} from "@mantine/core";
+import { Group, Navbar, Stack, Title, Skeleton } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { getMembers } from "../../api";
 import { useServer } from "../../store/useServer";
 import { ServerMember } from "../../types";
 import Member from "./Member";
-
-
 
 function Members() {
   const { server } = useServer((state) => state);
@@ -19,7 +11,9 @@ function Members() {
     queryKey: ["members", server?.id],
     queryFn: () => getMembers(server!.id),
   });
-  const members = data?.members?.map((member: ServerMember) => <Member key={member.id} member={member}/>);
+  const members = data?.members?.map((member: ServerMember) => (
+    <Member key={member.id} member={member} />
+  ));
   return (
     <Navbar
       left="unset"

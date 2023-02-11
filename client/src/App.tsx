@@ -132,12 +132,22 @@ function App() {
       }
     });
 
+    socket.on("user added to role", () => {
+      queryClient.invalidateQueries(["members"]);
+    });
+
+    socket.on("user removed from role", () => {
+      queryClient.invalidateQueries(["members"]);
+    });
+
     return () => {
       socket.off("message");
       socket.off("members");
       socket.off("status");
       socket.off("message update");
       socket.off("message delete");
+      socket.off("user added to role");
+      socket.off("user removed from role");
     };
   }, [socket, server]);
 

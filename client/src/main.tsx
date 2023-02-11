@@ -31,6 +31,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             modalProps={{
               zIndex: 1000,
             }}
+            
           >
             <App />
           </ModalsProvider>
